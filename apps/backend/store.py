@@ -1,64 +1,80 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 
-from apps.backend.devices import LEVEL1_DEVICES
+from apps.backend.db.sqlite_repository import SQLiteRepository
+from shared.schemas.device_heartbeat import DeviceHeartbeat
+from shared.schemas.process_heartbeat import ProcessHeartbeat
 from shared.schemas.sensor_event import SensorEvent
 
 
 class ReadingStore:
-    def __init__(self) -> None:
-        self._readings: dict[str, dict[str, dict[str, Any]]] = {}
-        self._logs: list[dict[str, str]] = []
+    def __init__(self, db_path: Path | None = None, log_path: Path | None = None) -> None:
         self._started_at = datetime.now(timezone.utc)
-        self._last_update: datetime | None = None
+        default_db_path = Path(__file__).resolve().parents[2] / "data" / "saferoom.db"
+        self._log_path = log_path or Path(__file__).resolve().parents[2] / "logs" / "saferoom.log"
+        self._repository = SQLiteRepository(db_path or default_db_path)
 
     def add_event(self, event: SensorEvent) -> None:
-        reading = event.model_dump(mode="json")
-        device_readings = self._readings.setdefault(event.device_id, {})
-        device_readings[event.sensor_id] = reading
-        self._last_update = datetime.now(timezone.utc)
-        self._logs.insert(
-            0,
-            {
-                "timestamp": self._last_update.isoformat(),
-                "level": "info",
-                "message": f"Reading received from {event.device_id}",
-            },
-        )
-        self._logs = self._logs[:25]
+        self._repository.add_event(event)
 
     def latest_readings(self) -> dict[str, Any]:
-        return {
-            "readings": self._readings,
-            "updated_at": self._last_update.isoformat() if self._last_update else None,
-        }
+        return self._repository.latest_readings()
+
+    def reading_history(
+        self,
+        *,
+        device_id: str | None = None,
+        sensor_id: str | None = None,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        return self._repository.reading_history(device_id=device_id, sensor_id=sensor_id, limit=limit)
 
     def health(self) -> dict[str, Any]:
         now = datetime.now(timezone.utc)
         uptime_seconds = int((now - self._started_at).total_seconds())
+        latest = self.latest_readings()
         return {
             "app": "Pico SafeRoom",
             "status": "running",
             "safety_state": self._safety_state(),
             "uptime_seconds": uptime_seconds,
-            "last_update": self._last_update.isoformat() if self._last_update else None,
-            "processes": {
-                "backend": "online",
-                "collector": "simulated",
-                "worker": "simulated",
-            },
+            "last_update": latest["updated_at"],
+            "processes": self._repository.process_statuses(),
         }
 
     def devices(self) -> dict[str, Any]:
-        return {"devices": LEVEL1_DEVICES}
+        return self._repository.devices()
+
+    def add_device_heartbeat(self, heartbeat: DeviceHeartbeat) -> None:
+        self._repository.add_device_heartbeat(heartbeat)
+
+    def add_process_heartbeat(self, heartbeat: ProcessHeartbeat) -> None:
+        self._repository.add_process_heartbeat(heartbeat)
 
     def logs(self) -> dict[str, Any]:
-        return {"logs": self._logs}
+        return self._repository.logs()
+
+    def add_log(self, level: str, message: str) -> None:
+        self._repository.add_log(level, message)
+        self._append_file_log(level, message)
+
+    def alerts(self) -> dict[str, Any]:
+        return self._repository.alerts()
+
+    def ack_alert(self, alert_id: int) -> dict[str, Any]:
+        return self._repository.ack_alert(alert_id)
+
+    def _append_file_log(self, level: str, message: str) -> None:
+        self._log_path.parent.mkdir(parents=True, exist_ok=True)
+        timestamp = datetime.now(timezone.utc).isoformat()
+        with self._log_path.open("a", encoding="utf-8") as log_file:
+            log_file.write(f"{timestamp} {level} {message}\n")
 
     def _safety_state(self) -> str:
-        for device_readings in self._readings.values():
+        for device_readings in self.latest_readings()["readings"].values():
             gas = device_readings.get("gas")
             temperature = device_readings.get("temperature")
             if gas and float(gas["value"]) >= 600:

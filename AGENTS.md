@@ -155,7 +155,7 @@ For GPT-5.5 prompt upgrades:
 - prefer shorter, outcome-first prompts over legacy process-heavy prompt stacks
 - define personality, collaboration style, success criteria, constraints, retrieval budget, validation loop, output format, and stop rules
 - keep true invariants explicit
-- keep reasoning-effort escalation intentional; re-evaluate `low` and `medium` before using higher effort
+- do not set a fixed reasoning effort in this file; reasoning effort is chosen by the user, session, app, CLI, or API configuration, and the agent may explicitly recommend higher or lower effort when appropriate
 - when API configuration is available, prefer concise output settings such as lower `text.verbosity` unless the task needs detail
 - preserve assistant-item `phase` values when replaying Responses API items
 
@@ -175,9 +175,11 @@ Keep true invariants explicit. Convert judgment-based rules into decision criter
 
 # Reasoning Effort
 
-Use the lowest reasoning effort that can reliably satisfy the task after skill requirements are considered.
+Do not set a fixed reasoning effort from this `AGENTS.md` file.
 
-Prefer default, low, or medium effort for ordinary implementation, Q&A, and documentation work. Escalate when an applicable skill requires deeper analysis or when the task involves complex debugging, architecture tradeoffs, high-stakes decisions, ambiguous migrations, or many interacting constraints.
+Reasoning effort is a user/session/app/CLI/API configuration decision. Follow the active configured effort and any explicit current-turn user request about reasoning effort.
+
+The agent may explicitly recommend higher or lower reasoning effort when task risk or complexity justifies a different setting. Recommend higher effort for architecture decisions, multi-file implementation, database/schema changes, hardware/MQTT/Pico integration, repeated failures, security or data-loss risk, merge readiness, and final audits. Recommend lower effort for simple Q&A, formatting, command lookup, trivial one-line edits, or quick status checks. Recommendations should be brief, grounded in the concrete task, and should not silently override the configured effort.
 
 # Grounding And Citations
 
@@ -276,7 +278,7 @@ Default to concise answers unless an applicable skill requires more detail.
 
 Use more detail when the user asks for depth, the task is complex, or the extra detail is needed for correctness, verification, safe execution, or skill compliance.
 
-For API surfaces that support `text.verbosity`, prefer `low` for brief answers and `medium` for normal technical work unless the task or active skill requires more detail.
+For API surfaces that support `text.verbosity`, do not set a project-level default from this file. Follow the active API configuration and any explicit current-turn user request.
 
 # Output
 

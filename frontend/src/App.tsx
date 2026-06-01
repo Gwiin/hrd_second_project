@@ -35,6 +35,12 @@ type LogEntry = {
 };
 
 type LatestReadings = Record<string, Record<string, Reading>>;
+type RealtimeState = 'live' | 'reconnecting' | 'offline';
+
+type RealtimeMessage = {
+  type: 'reading.created';
+  reading: Reading;
+};
 
 const fallbackDevices: Device[] = [
   { device_id: 'pico-safe-001', zone_id: 'room-1', device_name: 'Pico Safe 001', model: 'Raspberry Pi Pico 2W', status: 'online' },
@@ -102,6 +108,7 @@ export default function App() {
   const [health, setHealth] = useState<Health>(fallbackHealth);
   const [readings, setReadings] = useState<LatestReadings>({});
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [realtimeState, setRealtimeState] = useState<RealtimeState>('reconnecting');
 
   useEffect(() => {
     let cancelled = false;
@@ -128,6 +135,57 @@ export default function App() {
     return () => {
       cancelled = true;
       window.clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    let socket: WebSocket | null = null;
+    let reconnectTimer: number | null = null;
+    let stopped = false;
+
+    function connect() {
+      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      socket = new WebSocket(`${protocol}://${window.location.host}/ws/realtime`);
+
+      socket.onopen = () => {
+        setRealtimeState('live');
+      };
+
+      socket.onmessage = (event) => {
+        const message = JSON.parse(event.data) as RealtimeMessage;
+        if (message.type !== 'reading.created') return;
+        const reading = message.reading;
+        setReadings((current) => ({
+          ...current,
+          [reading.device_id]: {
+            ...(current[reading.device_id] ?? {}),
+            [reading.sensor_id]: reading
+          }
+        }));
+        setHealth((current) => ({
+          ...current,
+          last_update: new Date().toISOString()
+        }));
+      };
+
+      socket.onclose = () => {
+        if (stopped) return;
+        setRealtimeState('reconnecting');
+        reconnectTimer = window.setTimeout(connect, 1500);
+      };
+
+      socket.onerror = () => {
+        setRealtimeState('offline');
+        socket?.close();
+      };
+    }
+
+    connect();
+
+    return () => {
+      stopped = true;
+      if (reconnectTimer) window.clearTimeout(reconnectTimer);
+      socket?.close();
     };
   }, []);
 
@@ -171,6 +229,10 @@ export default function App() {
         <div className="timebox">
           <span>Last update</span>
           <strong>{formatTime(health.last_update)}</strong>
+        </div>
+        <div className={`realtime ${realtimeState}`}>
+          <span>Realtime</span>
+          <strong><i />{realtimeState}</strong>
         </div>
       </header>
 
@@ -220,7 +282,7 @@ export default function App() {
           <section className="panel timeline-panel">
             <div className="panel-title">
               <h2>Readings timeline</h2>
-              <span>mock Level 1 flow</span>
+              <span>{realtimeState === 'live' ? 'live websocket flow' : 'REST fallback active'}</span>
             </div>
             <div className="timeline">
               <div className="axis-labels">
