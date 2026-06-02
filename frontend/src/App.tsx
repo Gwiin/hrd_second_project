@@ -89,7 +89,7 @@ type RealtimeMessage = {
 };
 
 type AuthMode = 'signin' | 'signup';
-type AuthProvider = 'google' | 'apple' | 'kakao';
+type AuthProvider = 'google' | 'kakao';
 
 const fallbackDevices: Device[] = [
   { device_id: 'pico-safe-001', zone_id: 'room-1', device_name: 'Pico Safe 001', model: 'Raspberry Pi Pico 2W', status: 'online' },
@@ -579,10 +579,6 @@ export default function App() {
               <button type="button" onClick={() => handleSocialAuth('google')}>
                 <i className="google-dot" aria-hidden="true" />
                 Continue with Google
-              </button>
-              <button type="button" onClick={() => handleSocialAuth('apple')}>
-                <i className="apple-dot" aria-hidden="true" />
-                Continue with Apple
               </button>
               <button type="button" onClick={() => handleSocialAuth('kakao')}>
                 <i className="kakao-dot" aria-hidden="true" />

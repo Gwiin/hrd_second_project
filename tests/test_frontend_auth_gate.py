@@ -21,7 +21,6 @@ def test_auth_gate_offers_social_and_email_entry_points():
     app = APP_TSX.read_text()
 
     assert "Continue with Google" in app
-    assert "Continue with Apple" in app
     assert "Continue with Kakao" in app
     assert "Create account" in app
     assert 'type="email"' in app

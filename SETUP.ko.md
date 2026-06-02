@@ -1,25 +1,24 @@
-# Pico SafeRoom 설치 및 실행 안내
+﻿# Pico SafeRoom ?ㅼ튂 諛??ㅽ뻾 ?덈궡
 
-이 문서는 팀원이 개발 환경을 만들고, backend/dashboard/MQTT collector/desktop launcher를 실행하기 위한 한국어 안내입니다.
+??臾몄꽌????먯씠 媛쒕컻 ?섍꼍??留뚮뱾怨? backend/dashboard/MQTT collector/desktop launcher瑜??ㅽ뻾?섍린 ?꾪븳 ?쒓뎅???덈궡?낅땲??
 
-## 현재 포함된 기능
+## ?꾩옱 ?ы븿??湲곕뒫
 
 - FastAPI backend
-- SQLite 저장소
+- SQLite ??μ냼
 - React/Vite dashboard
 - pywebview desktop launcher
-- 4개 Pico 2W 장치 ID 등록
+- 4媛?Pico 2W ?μ튂 ID ?깅줉
 - MQTT reading collector
 - device heartbeat / process heartbeat
 - threshold alert / stale sensor alert
-- email 회원가입/로그인
-- Google / Apple / Kakao social login callback 경로
+- email ?뚯썝媛??濡쒓렇??
 - Pico 2W MicroPython firmware
-- 실제 센서 배선 문서와 그림
+- ?ㅼ젣 ?쇱꽌 諛곗꽑 臾몄꽌? 洹몃┝
 
-## Python 가상환경 만들기
+## Python 媛?곹솚寃?留뚮뱾湲?
 
-이 프로젝트는 Python 3.11을 사용합니다.
+???꾨줈?앺듃??Python 3.11???ъ슜?⑸땲??
 
 macOS/Linux:
 
@@ -37,9 +36,9 @@ py -3.11 -m venv .venv
 npm.cmd install --prefix frontend
 ```
 
-PowerShell에서 `npm.ps1` 실행이 막히면 `npm.cmd`를 사용합니다.
+PowerShell?먯꽌 `npm.ps1` ?ㅽ뻾??留됲엳硫?`npm.cmd`瑜??ъ슜?⑸땲??
 
-## 검증 명령
+## 寃利?紐낅졊
 
 macOS/Linux:
 
@@ -58,108 +57,137 @@ $env:TMP = (Resolve-Path data).Path
 npm.cmd --prefix frontend run build
 ```
 
-## Backend와 Dashboard 실행
+## Backend? Dashboard ?ㅽ뻾
 
-먼저 frontend를 build합니다.
+癒쇱? frontend瑜?build?⑸땲??
 
 ```bash
 npm --prefix frontend run build
 ```
 
-Backend 실행:
+Backend ?ㅽ뻾:
+
+macOS/Linux:
 
 ```bash
 .venv/bin/python -m uvicorn apps.backend.main:app --host 127.0.0.1 --port 8000
 ```
 
-브라우저에서 열기:
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn apps.backend.main:app --host 127.0.0.1 --port 8000
+```
+
+釉뚮씪?곗??먯꽌 ?닿린:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-## 로그인 설정
+## 濡쒓렇???ㅼ젙
 
-일반 회원가입과 로그인은 email/password로 바로 사용할 수 있습니다. 비밀번호는 SQLite에 plain text로 저장하지 않고 hash로 저장합니다.
+?쇰컲 ?뚯썝媛?낃낵 濡쒓렇?몄? email/password濡?諛붾줈 ?ъ슜?????덉뒿?덈떎. 鍮꾨?踰덊샇??SQLite??plain text濡???ν븯吏 ?딄퀬 hash濡???ν빀?덈떎.
 
-Google, Apple, Kakao social login은 각 provider console에서 client ID/secret과 redirect URL을 발급받은 뒤 환경변수로 넣습니다. Redirect URL은 local 개발 기준으로 아래 값을 등록합니다.
 
 ```text
 http://127.0.0.1:8000/api/auth/social/google/callback
-http://127.0.0.1:8000/api/auth/social/apple/callback
 http://127.0.0.1:8000/api/auth/social/kakao/callback
 ```
 
-macOS/Linux 예시:
+.env example:
 
-```bash
-export PICO_AUTH_REDIRECT_BASE_URL="http://127.0.0.1:8000"
-export PICO_AUTH_GOOGLE_CLIENT_ID="your-google-client-id"
-export PICO_AUTH_GOOGLE_CLIENT_SECRET="your-google-client-secret"
-export PICO_AUTH_APPLE_CLIENT_ID="your-apple-client-id"
-export PICO_AUTH_APPLE_CLIENT_SECRET="your-apple-client-secret"
-export PICO_AUTH_KAKAO_CLIENT_ID="your-kakao-client-id"
-export PICO_AUTH_KAKAO_CLIENT_SECRET="your-kakao-client-secret"
+```dotenv
+PICO_AUTH_REDIRECT_BASE_URL="http://127.0.0.1:8000"
+PICO_AUTH_GOOGLE_CLIENT_ID="your-google-client-id"
+PICO_AUTH_GOOGLE_CLIENT_SECRET="your-google-client-secret"
+PICO_AUTH_KAKAO_CLIENT_ID="your-kakao-client-id"
+PICO_AUTH_KAKAO_CLIENT_SECRET="your-kakao-client-secret"
 ```
 
-실제 secret 값은 git에 올리지 않습니다.
+?ㅼ젣 secret 媛믪? git???щ━吏 ?딆뒿?덈떎.
 
-## MQTT Collector 실행
+## MQTT Collector ?ㅽ뻾
 
-실제 Pico 2W를 사용할 때는 로컬 MQTT broker를 먼저 실행해야 합니다.
+?ㅼ젣 Pico 2W瑜??ъ슜???뚮뒗 濡쒖뺄 MQTT broker瑜?癒쇱? ?ㅽ뻾?댁빞 ?⑸땲??
 
 ```bash
 .venv/bin/python -m apps.collector.mqtt_client --broker-host 127.0.0.1 --broker-port 1883 --backend-url http://127.0.0.1:8000
 ```
 
-Collector가 구독하는 topic:
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe -m apps.collector.mqtt_client --broker-host 127.0.0.1 --broker-port 1883 --backend-url http://127.0.0.1:8000
+```
+
+Collector媛 援щ룆?섎뒗 topic:
 
 ```text
 saferoom/+/+/sensors/+/reading
 saferoom/+/+/status
 ```
 
-Reading topic은 `/internal/events`로 전달되고, heartbeat topic은 `/internal/heartbeats/device`로 전달됩니다.
+Reading topic? `/internal/events`濡??꾨떖?섍퀬, heartbeat topic? `/internal/heartbeats/device`濡??꾨떖?⑸땲??
 
-## Desktop Launcher 실행
+## Desktop Launcher ?ㅽ뻾
 
-기본 실행은 실제 Pico 2W + MQTT collector 모드입니다. Simulator는 자동으로 실행하지 않습니다.
+湲곕낯 ?ㅽ뻾? ?ㅼ젣 Pico 2W + MQTT collector 紐⑤뱶?낅땲?? Simulator???먮룞?쇰줈 ?ㅽ뻾?섏? ?딆뒿?덈떎.
 
-pywebview로 열기:
+pywebview濡??닿린:
 
 ```bash
 .venv/bin/python -m apps.desktop.app
 ```
 
-브라우저로 열기:
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\python.exe -m apps.desktop.app
+```
+
+釉뚮씪?곗?濡??닿린:
 
 ```bash
 .venv/bin/python -m apps.desktop.app --open browser
 ```
 
-Launcher는 backend, MQTT collector, worker를 별도 process로 시작합니다. GUI 환경이면 pywebview 창이 열리고, `--open browser`를 사용하면 같은 dashboard를 브라우저에서 엽니다.
+Windows PowerShell:
 
-## Simulator 실행
+```powershell
+.\.venv\Scripts\python.exe -m apps.desktop.app --open browser
+```
 
-Simulator는 개발/테스트 전용이며 실제 Pico 2W 실행 경로와 분리되어 있습니다. 실제 보드 발표나 데모에서는 실행하지 않습니다.
+Launcher??backend, MQTT collector, worker瑜?蹂꾨룄 process濡??쒖옉?⑸땲?? GUI ?섍꼍?대㈃ pywebview 李쎌씠 ?대━怨? `--open browser`瑜??ъ슜?섎㈃ 媛숈? dashboard瑜?釉뚮씪?곗??먯꽌 ?쎈땲??
+
+## Simulator ?ㅽ뻾
+
+Simulator??媛쒕컻/?뚯뒪???꾩슜?대ŉ ?ㅼ젣 Pico 2W ?ㅽ뻾 寃쎈줈? 遺꾨━?섏뼱 ?덉뒿?덈떎. ?ㅼ젣 蹂대뱶 諛쒗몴???곕え?먯꽌???ㅽ뻾?섏? ?딆뒿?덈떎.
 
 ```bash
 .venv/bin/python -m apps.collector.main --backend-url http://127.0.0.1:8000 --interval 2
 ```
 
-## Runtime 파일
+Windows PowerShell:
 
-| 파일/폴더 | 설명 |
+```powershell
+.\.venv\Scripts\python.exe -m apps.collector.main --backend-url http://127.0.0.1:8000 --interval 2
+```
+
+## Runtime ?뚯씪
+
+| ?뚯씪/?대뜑 | ?ㅻ챸 |
 | --- | --- |
 | `data/saferoom.db` | SQLite database |
-| `logs/saferoom.log` | 개발자용 log file |
+| `logs/saferoom.log` | 媛쒕컻?먯슜 log file |
 | `frontend/dist/` | frontend build output |
-| `firmware/pico2w/config.example.py` | Pico 설정 예시 |
-| `firmware/pico2w/config.py` | 실제 Pico에 복사할 local 설정 파일 |
+| `firmware/pico2w/config.example.py` | Pico ?ㅼ젙 ?덉떆 |
+| `firmware/pico2w/config.py` | ?ㅼ젣 Pico??蹂듭궗??local ?ㅼ젙 ?뚯씪 |
 
-`data/`, `logs/`, `frontend/dist/`, `firmware/pico2w/config.py`는 git에 올리지 않습니다.
+`data/`, `logs/`, `frontend/dist/`, `firmware/pico2w/config.py`??git???щ━吏 ?딆뒿?덈떎.
 
-## Pico 관련 문서
+## Pico 愿??臾몄꽌
 
-- 기본 펌웨어 안내: [firmware/pico2w/README.md](firmware/pico2w/README.md)
-- 실제 센서 배선 안내: [firmware/pico2w/README.real-sensors.md](firmware/pico2w/README.real-sensors.md)
+- 湲곕낯 ?뚯썾???덈궡: [firmware/pico2w/README.md](firmware/pico2w/README.md)
+- ?ㅼ젣 ?쇱꽌 諛곗꽑 ?덈궡: [firmware/pico2w/README.real-sensors.md](firmware/pico2w/README.real-sensors.md)
+
