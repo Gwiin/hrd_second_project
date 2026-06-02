@@ -1,13 +1,24 @@
 from __future__ import annotations
 
+import secrets
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, HTTPException, Query, Request, WebSocket, WebSocketDisconnect, status
+from fastapi import Cookie, FastAPI, HTTPException, Query, Request, Response, WebSocket, WebSocketDisconnect, status
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
+from apps.backend.auth import (
+    OAUTH_PROVIDERS,
+    OAUTH_STATE_COOKIE_PREFIX,
+    SESSION_COOKIE,
+    SESSION_MAX_AGE_SECONDS,
+    AuthCredentials,
+    exchange_oauth_code,
+    new_oauth_state,
+    social_provider_summaries,
+)
 from apps.backend.realtime import RealtimeHub
 from apps.backend.store import ReadingStore
 from shared.schemas.device_heartbeat import DeviceHeartbeat
@@ -78,6 +89,77 @@ def create_app(db_path: Path | None = None, log_path: Path | None = None) -> Fas
     def alerts() -> dict:
         return get_store().alerts()
 
+    @app.get("/api/auth/me")
+    def auth_me(saferoom_session: Annotated[str | None, Cookie()] = None) -> dict:
+        user = get_store().current_user(saferoom_session)
+        return {"authenticated": user is not None, "user": user}
+
+    @app.post("/api/auth/signup", status_code=status.HTTP_201_CREATED)
+    def auth_signup(payload: AuthCredentials, response: Response) -> dict:
+        user = get_store().signup_with_email(payload.email, payload.password)
+        if user is None:
+            raise HTTPException(status_code=409, detail="Email already registered")
+        _set_session_cookie(response, get_store().create_auth_session(user["user_id"]))
+        return {"user": user}
+
+    @app.post("/api/auth/login")
+    def auth_login(payload: AuthCredentials, response: Response) -> dict:
+        user = get_store().login_with_email(payload.email, payload.password)
+        if user is None:
+            raise HTTPException(status_code=401, detail="Invalid email or password")
+        _set_session_cookie(response, get_store().create_auth_session(user["user_id"]))
+        return {"user": user}
+
+    @app.post("/api/auth/logout")
+    def auth_logout(
+        response: Response,
+        saferoom_session: Annotated[str | None, Cookie()] = None,
+    ) -> dict:
+        get_store().logout(saferoom_session)
+        response.delete_cookie(SESSION_COOKIE, path="/")
+        return {"ok": True}
+
+    @app.get("/api/auth/social/providers")
+    def auth_social_providers() -> dict:
+        return {"providers": social_provider_summaries()}
+
+    @app.get("/api/auth/social/{provider}/start")
+    def auth_social_start(provider: str) -> RedirectResponse:
+        oauth_provider = OAUTH_PROVIDERS.get(provider)
+        if oauth_provider is None:
+            raise HTTPException(status_code=404, detail="Social provider not found")
+        if not oauth_provider.configured:
+            raise HTTPException(status_code=503, detail=f"{oauth_provider.display_name} OAuth is not configured")
+        state = new_oauth_state()
+        redirect = RedirectResponse(oauth_provider.authorization_url(state))
+        redirect.set_cookie(
+            f"{OAUTH_STATE_COOKIE_PREFIX}{provider}",
+            state,
+            httponly=True,
+            samesite="lax",
+            max_age=300,
+            path="/",
+        )
+        return redirect
+
+    @app.get("/api/auth/social/{provider}/callback")
+    def auth_social_callback(provider: str, request: Request, code: str, state: str) -> RedirectResponse:
+        oauth_provider = OAUTH_PROVIDERS.get(provider)
+        if oauth_provider is None:
+            raise HTTPException(status_code=404, detail="Social provider not found")
+        expected_state = request.cookies.get(f"{OAUTH_STATE_COOKIE_PREFIX}{provider}")
+        if not expected_state or not secrets.compare_digest(expected_state, state):
+            raise HTTPException(status_code=400, detail="Invalid OAuth state")
+        if not oauth_provider.configured:
+            raise HTTPException(status_code=503, detail=f"{oauth_provider.display_name} OAuth is not configured")
+
+        profile = exchange_oauth_code(oauth_provider, code)
+        user = get_store().login_with_social_profile(profile)
+        redirect = RedirectResponse("/")
+        _set_session_cookie(redirect, get_store().create_auth_session(user["user_id"]))
+        redirect.delete_cookie(f"{OAUTH_STATE_COOKIE_PREFIX}{provider}", path="/")
+        return redirect
+
     @app.post("/api/alerts/{alert_id}/ack")
     def ack_alert(alert_id: int) -> dict:
         try:
@@ -127,6 +209,17 @@ def create_app(db_path: Path | None = None, log_path: Path | None = None) -> Fas
             )
 
     return app
+
+
+def _set_session_cookie(response: Response, session_token: str) -> None:
+    response.set_cookie(
+        SESSION_COOKIE,
+        session_token,
+        httponly=True,
+        samesite="lax",
+        max_age=SESSION_MAX_AGE_SECONDS,
+        path="/",
+    )
 
 
 app = create_app()

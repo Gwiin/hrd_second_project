@@ -1,6 +1,6 @@
 # Pico SafeRoom 설치 및 실행 안내
 
-이 문서는 팀원이 개발 환경을 만들고, backend/dashboard/simulator/MQTT collector를 실행하기 위한 한국어 안내입니다.
+이 문서는 팀원이 개발 환경을 만들고, backend/dashboard/MQTT collector/desktop launcher를 실행하기 위한 한국어 안내입니다.
 
 ## 현재 포함된 기능
 
@@ -12,6 +12,8 @@
 - MQTT reading collector
 - device heartbeat / process heartbeat
 - threshold alert / stale sensor alert
+- email 회원가입/로그인
+- Google / Apple / Kakao social login callback 경로
 - Pico 2W MicroPython firmware
 - 실제 센서 배선 문서와 그림
 
@@ -56,7 +58,7 @@ $env:TMP = (Resolve-Path data).Path
 npm.cmd --prefix frontend run build
 ```
 
-## Backend와 Simulator 실행
+## Backend와 Dashboard 실행
 
 먼저 frontend를 build합니다.
 
@@ -70,17 +72,37 @@ Backend 실행:
 .venv/bin/python -m uvicorn apps.backend.main:app --host 127.0.0.1 --port 8000
 ```
 
-다른 터미널에서 simulator 실행:
-
-```bash
-.venv/bin/python -m apps.collector.main --backend-url http://127.0.0.1:8000 --interval 2
-```
-
 브라우저에서 열기:
 
 ```text
 http://127.0.0.1:8000
 ```
+
+## 로그인 설정
+
+일반 회원가입과 로그인은 email/password로 바로 사용할 수 있습니다. 비밀번호는 SQLite에 plain text로 저장하지 않고 hash로 저장합니다.
+
+Google, Apple, Kakao social login은 각 provider console에서 client ID/secret과 redirect URL을 발급받은 뒤 환경변수로 넣습니다. Redirect URL은 local 개발 기준으로 아래 값을 등록합니다.
+
+```text
+http://127.0.0.1:8000/api/auth/social/google/callback
+http://127.0.0.1:8000/api/auth/social/apple/callback
+http://127.0.0.1:8000/api/auth/social/kakao/callback
+```
+
+macOS/Linux 예시:
+
+```bash
+export PICO_AUTH_REDIRECT_BASE_URL="http://127.0.0.1:8000"
+export PICO_AUTH_GOOGLE_CLIENT_ID="your-google-client-id"
+export PICO_AUTH_GOOGLE_CLIENT_SECRET="your-google-client-secret"
+export PICO_AUTH_APPLE_CLIENT_ID="your-apple-client-id"
+export PICO_AUTH_APPLE_CLIENT_SECRET="your-apple-client-secret"
+export PICO_AUTH_KAKAO_CLIENT_ID="your-kakao-client-id"
+export PICO_AUTH_KAKAO_CLIENT_SECRET="your-kakao-client-secret"
+```
+
+실제 secret 값은 git에 올리지 않습니다.
 
 ## MQTT Collector 실행
 
@@ -101,11 +123,29 @@ Reading topic은 `/internal/events`로 전달되고, heartbeat topic은 `/intern
 
 ## Desktop Launcher 실행
 
+기본 실행은 실제 Pico 2W + MQTT collector 모드입니다. Simulator는 자동으로 실행하지 않습니다.
+
+pywebview로 열기:
+
 ```bash
 .venv/bin/python -m apps.desktop.app
 ```
 
-Launcher는 backend, simulator collector, worker를 별도 process로 시작합니다. GUI 환경이면 pywebview 창이 열리고, 아니면 출력된 local URL을 브라우저에서 열면 됩니다.
+브라우저로 열기:
+
+```bash
+.venv/bin/python -m apps.desktop.app --open browser
+```
+
+Launcher는 backend, MQTT collector, worker를 별도 process로 시작합니다. GUI 환경이면 pywebview 창이 열리고, `--open browser`를 사용하면 같은 dashboard를 브라우저에서 엽니다.
+
+## Simulator 실행
+
+Simulator는 개발/테스트 전용이며 실제 Pico 2W 실행 경로와 분리되어 있습니다. 실제 보드 발표나 데모에서는 실행하지 않습니다.
+
+```bash
+.venv/bin/python -m apps.collector.main --backend-url http://127.0.0.1:8000 --interval 2
+```
 
 ## Runtime 파일
 
