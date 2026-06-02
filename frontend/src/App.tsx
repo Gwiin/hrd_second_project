@@ -102,8 +102,7 @@ const sensorLabels: Record<string, string> = {
   temperature: 'Temperature',
   humidity: 'Humidity',
   light: 'Light',
-  motion: 'Motion',
-  gas: 'Gas'
+  motion: 'Motion'
 };
 
 const fallbackHealth: Health = {

@@ -18,6 +18,12 @@ def read_dht_sensor(sensor):
     ]
 
 
+def dht_sensor(dht_module, pin, sensor_type):
+    if sensor_type == "DHT11":
+        return dht_module.DHT11(pin)
+    return dht_module.DHT22(pin)
+
+
 def read_motion(pin):
     return [("motion", bool(pin.value()), "bool")]
 
@@ -33,13 +39,15 @@ def read_light(adc):
 def read_all_sensors():
     from config import ENABLE_DHT, ENABLE_GAS, ENABLE_LIGHT, ENABLE_MOTION
     from config import PIN_DHT, PIN_GAS_ADC, PIN_LIGHT_ADC, PIN_MOTION
+    import config
     from machine import ADC, Pin
 
     readings = []
     if ENABLE_DHT:
         import dht
 
-        readings.extend(_read_or_empty(lambda: read_dht_sensor(dht.DHT22(Pin(PIN_DHT)))))
+        sensor_type = getattr(config, "DHT_SENSOR_TYPE", "DHT22")
+        readings.extend(_read_or_empty(lambda: read_dht_sensor(dht_sensor(dht, Pin(PIN_DHT), sensor_type))))
     if ENABLE_MOTION:
         readings.extend(_read_or_empty(lambda: read_motion(Pin(PIN_MOTION, Pin.IN))))
     if ENABLE_GAS:
