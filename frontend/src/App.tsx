@@ -6,6 +6,8 @@ type Device = {
   device_name: string;
   model: string;
   status: string;
+  protocol?: string;
+  last_seen_at?: string | null;
 };
 
 type Health = {
@@ -32,6 +34,50 @@ type LogEntry = {
   timestamp: string;
   level: string;
   message: string;
+};
+
+type Alert = {
+  alert_id: number | null;
+  level: string;
+  code: string;
+  message: string;
+  zone_id: string | null;
+  device_id: string | null;
+  sensor_id: string | null;
+  value: number | null;
+  status: string;
+  created_at: string;
+};
+
+type TimelineEntry = {
+  id: string;
+  type: string;
+  timestamp: string;
+  title: string;
+  message: string;
+  tone: string;
+  zone_id?: string | null;
+  device_id?: string | null;
+  sensor_id?: string | null;
+  process?: string;
+  status?: string;
+  quality?: string;
+};
+
+type ProcessLiveness = {
+  kind: 'process';
+  process: string;
+  status: string;
+  last_seen_at: string | null;
+};
+
+type DeviceLiveness = Device & {
+  kind: 'device';
+};
+
+type Liveness = {
+  devices: DeviceLiveness[];
+  processes: ProcessLiveness[];
 };
 
 type LatestReadings = Record<string, Record<string, Reading>>;
@@ -70,6 +116,15 @@ const fallbackHealth: Health = {
   }
 };
 
+const fallbackLiveness: Liveness = {
+  devices: fallbackDevices.map((device) => ({ ...device, kind: 'device' })),
+  processes: [
+    { kind: 'process', process: 'backend', status: 'connecting', last_seen_at: null },
+    { kind: 'process', process: 'collector', status: 'connecting', last_seen_at: null },
+    { kind: 'process', process: 'worker', status: 'connecting', last_seen_at: null }
+  ]
+};
+
 function formatTime(value: string | null): string {
   if (!value) return '--:--:--';
   return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -88,6 +143,19 @@ function formatReading(reading: Reading | undefined, sensorId: string): string {
   return `${reading.value} ${reading.unit === 'celsius' ? 'C' : reading.unit}`;
 }
 
+function sensorQuality(reading: Reading | undefined): string {
+  if (!reading) return 'missing';
+  const timestampMs = new Date(reading.timestamp).getTime();
+  if (Number.isFinite(timestampMs) && Date.now() - timestampMs > 30_000) return 'stale';
+  return reading.quality;
+}
+
+function qualityTone(quality: string): string {
+  if (quality === 'bad' || quality === 'missing') return 'critical';
+  if (quality === 'stale' || quality === 'uncertain') return 'warning';
+  return 'safe';
+}
+
 function sparkline(seed: number): string {
   return Array.from({ length: 20 }, (_, index) => {
     const x = 5 + index * 8;
@@ -97,8 +165,8 @@ function sparkline(seed: number): string {
 }
 
 function statusTone(status: string): string {
-  if (status === 'critical') return 'critical';
-  if (status === 'warning') return 'warning';
+  if (status === 'critical' || status === 'offline' || status === 'bad' || status === 'missing') return 'critical';
+  if (status === 'warning' || status === 'degraded' || status === 'simulated' || status === 'stale') return 'warning';
   return 'safe';
 }
 
@@ -108,23 +176,40 @@ export default function App() {
   const [health, setHealth] = useState<Health>(fallbackHealth);
   const [readings, setReadings] = useState<LatestReadings>({});
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
+  const [liveness, setLiveness] = useState<Liveness>(fallbackLiveness);
   const [realtimeState, setRealtimeState] = useState<RealtimeState>('reconnecting');
 
   useEffect(() => {
     let cancelled = false;
 
     async function refresh() {
-      const [healthResponse, devicesResponse, readingsResponse, logsResponse] = await Promise.all([
+      const [
+        healthResponse,
+        devicesResponse,
+        readingsResponse,
+        logsResponse,
+        alertsResponse,
+        timelineResponse,
+        livenessResponse
+      ] = await Promise.all([
         fetch('/api/health'),
         fetch('/api/devices'),
         fetch('/api/readings/latest'),
-        fetch('/api/logs')
+        fetch('/api/logs'),
+        fetch('/api/alerts'),
+        fetch('/api/timeline?limit=12'),
+        fetch('/api/liveness')
       ]);
       if (cancelled) return;
       setHealth(await healthResponse.json());
       setDevices((await devicesResponse.json()).devices);
       setReadings((await readingsResponse.json()).readings);
       setLogs((await logsResponse.json()).logs);
+      setAlerts((await alertsResponse.json()).alerts);
+      setTimeline((await timelineResponse.json()).events);
+      setLiveness(await livenessResponse.json());
     }
 
     refresh().catch(() => undefined);
@@ -193,14 +278,32 @@ export default function App() {
   const selectedReadings = readings[selectedDevice?.device_id] ?? {};
   const safetyTone = statusTone(health.safety_state);
 
-  const recentAlerts = useMemo(
-    () => [
-      { level: 'Info', message: 'All clear', room: selectedDevice?.zone_id ?? 'room-1', tone: 'safe' },
-      { level: health.safety_state === 'safe' ? 'Info' : 'Warning', message: health.safety_state === 'safe' ? 'No active alert' : 'Safety threshold warning', room: selectedDevice?.zone_id ?? 'room-1', tone: safetyTone },
-      { level: 'Info', message: 'Four Pico 2W devices registered', room: 'site', tone: 'safe' }
-    ],
-    [health.safety_state, safetyTone, selectedDevice?.zone_id]
+  const alertRows = useMemo(
+    () => alerts.length
+      ? alerts.slice(0, 5).map((alert) => ({
+        level: alert.level,
+        message: alert.message,
+        room: alert.zone_id ?? 'site',
+        tone: statusTone(alert.level)
+      }))
+      : [
+        { level: 'info', message: 'No active alert', room: selectedDevice?.zone_id ?? 'room-1', tone: 'safe' },
+        { level: 'info', message: 'Four Pico 2W devices registered', room: 'site', tone: 'safe' }
+      ],
+    [alerts, selectedDevice?.zone_id]
   );
+  const timelineRows = timeline.length
+    ? timeline
+    : [{
+      id: 'waiting',
+      type: 'log',
+      timestamp: new Date().toISOString(),
+      title: 'waiting',
+      message: 'Waiting for MQTT readings',
+      tone: 'warning'
+    }];
+  const livenessDevices = liveness.devices.length ? liveness.devices : fallbackLiveness.devices;
+  const livenessProcesses = liveness.processes.length ? liveness.processes : fallbackLiveness.processes;
 
   return (
     <main className="app-shell">
@@ -219,7 +322,7 @@ export default function App() {
         {Object.entries(health.processes).map(([name, state]) => (
           <div className="process" key={name}>
             <span>{name}</span>
-            <strong><i />{state}</strong>
+            <strong><i className={statusTone(state)} />{state}</strong>
           </div>
         ))}
         <div className="timebox">
@@ -248,7 +351,7 @@ export default function App() {
               >
                 <span>{device.zone_id.replace('-', ' ')}</span>
                 <small>{device.device_id}</small>
-                <i />
+                <i className={statusTone(device.status)} />
               </button>
             ))}
           </div>
@@ -266,42 +369,41 @@ export default function App() {
               <span>{selectedDevice?.zone_id} / {selectedDevice?.device_id}</span>
             </div>
             <div className="reading-grid">
-              {Object.keys(sensorLabels).map((sensorId, index) => (
-                <article className="reading-card" key={sensorId}>
-                  <span className="sensor-name">{sensorLabels[sensorId]}</span>
-                  <strong>{formatReading(selectedReadings[sensorId], sensorId)}</strong>
-                  <small>{selectedReadings[sensorId]?.quality ?? 'waiting'}</small>
-                  <svg viewBox="0 0 170 44" aria-hidden="true">
-                    <path d={sparkline(index + selectedDeviceId.length)} />
-                  </svg>
-                </article>
-              ))}
+              {Object.keys(sensorLabels).map((sensorId, index) => {
+                const reading = selectedReadings[sensorId];
+                const quality = sensorQuality(reading);
+                const tone = qualityTone(quality);
+                return (
+                  <article className={`reading-card ${tone}`} key={sensorId}>
+                    <span className="sensor-name">{sensorLabels[sensorId]}</span>
+                    <strong>{formatReading(reading, sensorId)}</strong>
+                    <small className={`quality-badge ${tone}`}>{quality}</small>
+                    <svg viewBox="0 0 170 44" aria-hidden="true">
+                      <path d={sparkline(index + selectedDeviceId.length)} />
+                    </svg>
+                  </article>
+                );
+              })}
             </div>
           </section>
 
           <section className="panel timeline-panel">
             <div className="panel-title">
-              <h2>Readings timeline</h2>
-              <span>{realtimeState === 'live' ? 'live websocket flow' : 'REST fallback active'}</span>
+              <h2>Blackbox timeline</h2>
+              <span>{realtimeState === 'live' ? 'live websocket flow' : 'REST polling active'}</span>
             </div>
-            <div className="timeline">
-              <div className="axis-labels">
-                <span>Temperature</span>
-                <span>Humidity</span>
-                <span>Light</span>
-                <span>Gas</span>
-              </div>
-              <svg viewBox="0 0 900 250" aria-label="Sensor trend lines">
-                <g className="grid-lines">
-                  {[0, 1, 2, 3, 4].map((line) => (
-                    <line key={line} x1="40" x2="870" y1={35 + line * 42} y2={35 + line * 42} />
-                  ))}
-                </g>
-                <path className="trend red" d="M40 95 C170 80 250 130 370 105 S560 70 690 100 S810 120 870 90" />
-                <path className="trend blue" d="M40 135 C190 145 280 120 390 132 S560 148 700 126 S820 112 870 116" />
-                <path className="trend yellow" d="M40 185 C210 190 290 178 360 150 S470 45 580 105 S700 180 870 168" />
-                <path className="trend green" d="M40 165 C190 160 310 168 420 158 S610 145 730 154 S820 150 870 148" />
-              </svg>
+            <div className="blackbox-list">
+              {timelineRows.slice(0, 9).map((entry) => (
+                <article className={`blackbox-event ${statusTone(entry.tone)}`} key={entry.id}>
+                  <time>{formatTime(entry.timestamp)}</time>
+                  <i />
+                  <div>
+                    <strong>{entry.title}</strong>
+                    <span>{entry.message}</span>
+                  </div>
+                  <em>{entry.type.replace('_', ' ')}</em>
+                </article>
+              ))}
             </div>
           </section>
         </section>
@@ -309,7 +411,7 @@ export default function App() {
         <aside className="right-rail">
           <section className="panel alerts">
             <h2>Recent alerts</h2>
-            {recentAlerts.map((alert) => (
+            {alertRows.map((alert) => (
               <div className="alert-row" key={`${alert.message}-${alert.room}`}>
                 <i className={alert.tone} />
                 <div>
@@ -319,6 +421,29 @@ export default function App() {
                 <em className={alert.tone}>{alert.level}</em>
               </div>
             ))}
+          </section>
+          <section className="panel liveness-panel">
+            <h2>Liveness</h2>
+            <div className="liveness-group">
+              <span>Devices</span>
+              {livenessDevices.map((device) => (
+                <div className="liveness-row" key={device.device_id}>
+                  <i className={statusTone(device.status)} />
+                  <strong>{device.device_id}</strong>
+                  <em>{device.status}</em>
+                </div>
+              ))}
+            </div>
+            <div className="liveness-group">
+              <span>Processes</span>
+              {livenessProcesses.map((process) => (
+                <div className="liveness-row" key={process.process}>
+                  <i className={statusTone(process.status)} />
+                  <strong>{process.process}</strong>
+                  <em>{process.status}</em>
+                </div>
+              ))}
+            </div>
           </section>
           <section className="panel logs">
             <h2>System log</h2>
@@ -336,7 +461,7 @@ export default function App() {
       <footer className="footer">
         <span><strong>Last event:</strong> {logs[0]?.message ?? 'waiting for readings'}</span>
         <span><strong>Runtime:</strong> {formatUptime(health.uptime_seconds)}</span>
-        <span><strong>Data rate:</strong> simulated</span>
+        <span><strong>Data flow:</strong> {realtimeState === 'live' ? 'websocket' : 'REST'}</span>
         <span><strong>Local time:</strong> {new Date().toLocaleTimeString()}</span>
       </footer>
     </main>
