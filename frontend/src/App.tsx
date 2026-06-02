@@ -206,7 +206,7 @@ export default function App() {
     <main className="app-shell">
       <header className="topbar">
         <div className="brand">
-          <div className="shield">P</div>
+          <span className="brand-status" aria-hidden="true" />
           <div>
             <h1>Pico SafeRoom</h1>
             <span>Four-device Pico 2W safety monitor</span>
@@ -316,7 +316,7 @@ export default function App() {
                   <strong>{alert.message}</strong>
                   <span>{alert.room}</span>
                 </div>
-                <em>{alert.level}</em>
+                <em className={alert.tone}>{alert.level}</em>
               </div>
             ))}
           </section>
