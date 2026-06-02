@@ -13,7 +13,7 @@ from config import (
     WIFI_SSID,
     ZONE_ID,
 )
-from payloads import heartbeat_payload, heartbeat_topic, reading_payload, reading_topic
+from payloads import heartbeat_payload, heartbeat_topic, reading_payload, reading_topic, timestamp_from_localtime
 from sensors import read_all_sensors
 
 
@@ -33,15 +33,7 @@ def mqtt_client():
 
 
 def timestamp():
-    year, month, day, hour, minute, second, _, _ = time.localtime()
-    return "{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}+00:00".format(
-        year,
-        month,
-        day,
-        hour,
-        minute,
-        second,
-    )
+    return timestamp_from_localtime(time.localtime())
 
 
 def publish_readings(client, seq):
