@@ -19,3 +19,9 @@ def test_generated_events_use_pico_saferoom_identity():
     assert event.device_id == "pico-safe-001"
     assert event.protocol == "mock"
     assert event.metadata["seq"] == 3
+
+
+def test_simulator_keeps_mock_protocol():
+    events = generate_sensor_events(seq=1)
+
+    assert {event.protocol for event in events} == {"mock"}
