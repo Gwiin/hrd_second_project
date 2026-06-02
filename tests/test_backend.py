@@ -73,6 +73,15 @@ def test_health_reports_level1_processes(tmp_path):
     assert body["processes"]["worker"] == "simulated"
 
 
+def test_favicon_route_prevents_browser_404(tmp_path):
+    client = TestClient(make_app(tmp_path))
+
+    response = client.get("/favicon.ico")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("image/svg+xml")
+
+
 def test_devices_api_returns_four_pico_2w_devices(tmp_path):
     client = TestClient(make_app(tmp_path))
 
