@@ -228,10 +228,6 @@ button {
   background: conic-gradient(#4285f4 0 25%, #34a853 0 50%, #fbbc05 0 75%, #ea4335 0);
 }
 
-.apple-dot {
-  background: #111827;
-}
-
 .kakao-dot {
   background: #fee500;
   box-shadow: inset 0 0 0 1px rgba(24, 39, 58, 0.12);

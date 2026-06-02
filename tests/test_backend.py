@@ -1,6 +1,4 @@
 import importlib
-import base64
-import json
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -389,14 +387,17 @@ def test_duplicate_email_signup_is_rejected(tmp_path):
     assert duplicate_response.json()["detail"] == "Email already registered"
 
 
-def test_social_auth_providers_include_google_apple_and_kakao(tmp_path):
+def test_social_auth_providers_include_google_and_kakao(monkeypatch, tmp_path):
+    for provider in ("GOOGLE", "KAKAO"):
+        monkeypatch.delenv(f"PICO_AUTH_{provider}_CLIENT_ID", raising=False)
+        monkeypatch.delenv(f"PICO_AUTH_{provider}_CLIENT_SECRET", raising=False)
     client = TestClient(make_app(tmp_path))
 
     response = client.get("/api/auth/social/providers")
 
     assert response.status_code == 200
     body = response.json()
-    assert [provider["provider"] for provider in body["providers"]] == ["google", "apple", "kakao"]
+    assert [provider["provider"] for provider in body["providers"]] == ["google", "kakao"]
     assert {provider["configured"] for provider in body["providers"]} == {False}
 
 
@@ -548,55 +549,3 @@ def test_kakao_social_callback_maps_kakao_profile(monkeypatch, tmp_path):
         "provider": "kakao",
     }
 
-
-def test_apple_social_callback_maps_id_token_profile(monkeypatch, tmp_path):
-    monkeypatch.setenv("PICO_AUTH_APPLE_CLIENT_ID", "apple-client")
-    monkeypatch.setenv("PICO_AUTH_APPLE_CLIENT_SECRET", "apple-secret")
-    payload = {"sub": "apple-subject-1", "email": "apple-user@example.com"}
-    payload_json = json.dumps(payload).encode()
-    id_token_payload = base64.urlsafe_b64encode(payload_json).decode().rstrip("=")
-    id_token = f"header.{id_token_payload}.signature"
-
-    class FakeResponse:
-        def __init__(self, payload):
-            self._payload = payload
-
-        def raise_for_status(self):
-            return None
-
-        def json(self):
-            return self._payload
-
-    class FakeClient:
-        def __init__(self, timeout):
-            self.timeout = timeout
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc, tb):
-            return None
-
-        def post(self, url, data):
-            return FakeResponse({"id_token": id_token})
-
-        def get(self, url, headers):
-            raise AssertionError("Apple callback should read profile from id_token")
-
-    monkeypatch.setattr(backend_auth, "httpx", type("FakeHttpx", (), {"Client": FakeClient}), raising=False)
-    client = TestClient(make_app(tmp_path))
-    client.cookies.set("saferoom_oauth_state_apple", "expected-state")
-
-    response = client.get(
-        "/api/auth/social/apple/callback?code=oauth-code&state=expected-state",
-        follow_redirects=False,
-    )
-    me_response = client.get("/api/auth/me")
-
-    assert response.status_code == 307
-    assert me_response.json()["user"] == {
-        "user_id": 1,
-        "email": "apple-user@example.com",
-        "display_name": "apple-user",
-        "provider": "apple",
-    }

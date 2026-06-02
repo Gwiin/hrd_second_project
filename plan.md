@@ -2,8 +2,8 @@
 
 ## Target outcome
 - Support email/password signup and login.
-- Support Google, Apple, and Kakao social login.
-- Keep the login UI visually consistent with the Apple Liquid Glass dashboard.
+- Support Google and Kakao social login.
+- Keep the login UI visually consistent with the dashboard.
 - Run the system through either pywebview or a normal browser.
 - Default runtime uses real Pico 2W boards through MQTT; the simulator remains separate.
 - Identify a clear differentiation direction for the project beyond a generic IoT dashboard.
@@ -17,8 +17,8 @@
 
 ## Implementation checklist
 - [x] Email/password signup, login, session cookie, and logout backend.
-- [x] Google, Apple, Kakao OAuth start and callback exchange paths.
-- [x] Blurred pre-login dashboard with Apple-style auth card.
+- [x] Google and Kakao OAuth start and callback exchange paths.
+- [x] Blurred pre-login dashboard with auth card.
 - [x] Real Pico 2W MQTT collector as the launcher default.
 - [x] Browser launch mode through `apps.desktop.app --open browser`.
 - [x] Simulator documented as a separate development/test command.
@@ -36,5 +36,5 @@
 - Rendered auth/dashboard smoke test in browser or Playwright when UI changes.
 
 ## Open blockers
-- Live Google/Apple/Kakao OAuth verification requires real provider console credentials and registered redirect URLs.
+- Live Google/Kakao OAuth verification requires real provider console credentials and registered redirect URLs.
 - Real hardware bring-up requires the four Pico 2W boards, sensors, Wi-Fi settings, and MQTT broker reachable from the devices.

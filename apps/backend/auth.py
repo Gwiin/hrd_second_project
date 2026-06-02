@@ -3,7 +3,6 @@ from __future__ import annotations
 import base64
 import hashlib
 import hmac
-import json
 import os
 import secrets
 from dataclasses import dataclass
@@ -13,12 +12,16 @@ from urllib.parse import urlencode
 import httpx
 from pydantic import BaseModel, Field
 
+from apps.backend.env import load_dotenv
+
+
+load_dotenv()
 
 SESSION_COOKIE = "saferoom_session"
 SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7
 OAUTH_STATE_COOKIE_PREFIX = "saferoom_oauth_state_"
 PASSWORD_ITERATIONS = 210_000
-SOCIAL_PROVIDERS = ("google", "apple", "kakao")
+SOCIAL_PROVIDERS = ("google", "kakao")
 
 
 class AuthCredentials(BaseModel):
@@ -91,14 +94,6 @@ OAUTH_PROVIDERS = {
         userinfo_url="https://openidconnect.googleapis.com/v1/userinfo",
         scope="openid email profile",
     ),
-    "apple": OAuthProvider(
-        provider="apple",
-        display_name="Apple",
-        authorize_url="https://appleid.apple.com/auth/authorize",
-        token_url="https://appleid.apple.com/auth/token",
-        userinfo_url=None,
-        scope="name email",
-    ),
     "kakao": OAuthProvider(
         provider="kakao",
         display_name="Kakao",
@@ -136,9 +131,6 @@ def exchange_oauth_code(provider: OAuthProvider, code: str) -> OAuthProfile:
         token_response.raise_for_status()
         token_payload = token_response.json()
 
-        if provider.provider == "apple":
-            return _apple_profile(provider, token_payload)
-
         access_token = token_payload["access_token"]
         if not provider.userinfo_url:
             raise RuntimeError(f"{provider.display_name} userinfo endpoint is not configured")
@@ -173,25 +165,6 @@ def _kakao_profile(provider: OAuthProvider, payload: dict) -> OAuthProfile:
         email=email,
         display_name=properties.get("nickname") or display_name_from_email(email),
     )
-
-
-def _apple_profile(provider: OAuthProvider, payload: dict) -> OAuthProfile:
-    token_payload = _decode_jwt_payload(payload["id_token"])
-    email = normalize_email(token_payload["email"])
-    return OAuthProfile(
-        provider=provider.provider,
-        subject=str(token_payload["sub"]),
-        email=email,
-        display_name=token_payload.get("name") or display_name_from_email(email),
-    )
-
-
-def _decode_jwt_payload(token: str) -> dict:
-    parts = token.split(".")
-    if len(parts) < 2:
-        raise ValueError("Invalid JWT")
-    encoded = parts[1] + "=" * (-len(parts[1]) % 4)
-    return json.loads(base64.urlsafe_b64decode(encoded))
 
 
 def hash_password(password: str) -> str:
