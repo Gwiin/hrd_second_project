@@ -10,8 +10,9 @@
 - 완료: 실제 Pico 2W용 MicroPython real-sensor firmware 경로.
 - 완료: 팀원용 한국어 README/SETUP/firmware 문서.
 - 완료: Apple Liquid Glass 스타일 dashboard redesign 구현.
-- 완료: 로그인 전 dashboard blur 처리, email auth session, Google/Apple/Kakao OAuth entrypoint와 callback exchange 구현.
+- 완료: 로그인 전 dashboard blur 처리, email auth session/logout, Google/Apple/Kakao OAuth entrypoint와 callback exchange 구현.
 - 완료: desktop launcher 기본 실행 경로를 simulator가 아닌 실제 Pico 2W + MQTT collector 모드로 변경.
+- 완료: local browser 실행에서 `/ws/realtime`이 404가 나지 않도록 `websockets` runtime dependency를 추가하고 favicon 404를 제거.
 - 다음 작업: 실제 OAuth provider credential 등록과 실제 센서 bring-up 후 dashboard calibration/status UI 보강.
 
 ## 최신 디자인 기준
@@ -93,9 +94,10 @@ Apple Liquid Glass dashboard visual은 승인 완료 상태입니다.
 
 ### Auth Gate, Social Login Entry, Real-Board Launcher
 
-상태: 구현 진행 중
+상태: software 구현 완료, live provider 검증 필요
 
 - 로그인 전에는 dashboard를 blur 처리하고 auth card만 조작 가능하도록 변경.
+- 로그인 후 dashboard header에서 다시 sign out 할 수 있도록 추가.
 - email/password 일반 회원가입과 로그인 API를 추가.
 - password는 SQLite에 plain text로 저장하지 않고 PBKDF2 hash로 저장.
 - `saferoom_session` HTTP-only cookie 기반 session을 추가.
@@ -106,6 +108,8 @@ Apple Liquid Glass dashboard visual은 승인 완료 상태입니다.
 - desktop launcher 기본 collector를 simulator에서 MQTT collector로 변경.
 - browser launch mode를 `apps.desktop.app --open browser`로 추가.
 - simulator는 개발/테스트 전용 별도 명령으로 문서화.
+- Uvicorn browser runtime에서 WebSocket handshake가 404로 떨어지지 않도록 `websockets` dependency를 추가.
+- `/favicon.ico` route를 추가해 browser console의 favicon 404 noise를 제거.
 
 관련 주요 파일:
 
@@ -126,6 +130,7 @@ Apple Liquid Glass dashboard visual은 승인 완료 상태입니다.
 - live FastAPI auth cookie smoke test
 - desktop/mobile screenshot 검증
 - mocked Google/Apple/Kakao OAuth callback tests
+- rendered signup/sign-out/mobile auth QA
 
 ## 2026-06-01
 

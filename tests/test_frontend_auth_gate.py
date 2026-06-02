@@ -35,3 +35,11 @@ def test_auth_gate_uses_backend_auth_endpoints():
     assert "fetch('/api/auth/signup'" in app
     assert "fetch('/api/auth/login'" in app
     assert "window.location.href = `/api/auth/social/${provider}/start`" in app
+
+
+def test_authenticated_dashboard_has_logout_action():
+    app = APP_TSX.read_text()
+
+    assert "Sign out" in app
+    assert "fetch('/api/auth/logout'" in app
+    assert "setIsAuthenticated(false)" in app

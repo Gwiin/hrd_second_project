@@ -367,6 +367,14 @@ export default function App() {
     window.location.href = `/api/auth/social/${provider}/start`;
   }
 
+  async function handleLogout() {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+      credentials: 'include'
+    }).catch(() => undefined);
+    setIsAuthenticated(false);
+  }
+
   return (
     <main className="app-shell">
       <div className={isAuthenticated ? 'dashboard-shell' : 'dashboard-shell auth-locked'} aria-hidden={!isAuthenticated}>
@@ -377,6 +385,11 @@ export default function App() {
               <h1>Pico SafeRoom</h1>
               <span>Four-device Pico 2W safety monitor</span>
             </div>
+            {isAuthenticated && (
+              <button className="sign-out-button" type="button" onClick={handleLogout}>
+                Sign out
+              </button>
+            )}
           </div>
           <div className={`safety ${safetyTone}`}>
             <span>Safety state</span>

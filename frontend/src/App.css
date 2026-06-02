@@ -324,6 +324,26 @@ button {
   background: rgba(255, 255, 255, 0.18);
 }
 
+.sign-out-button {
+  min-height: 36px;
+  margin-left: auto;
+  padding: 0 13px;
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.36);
+  color: rgba(16, 32, 51, 0.78);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 740;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
+  transition: transform 160ms ease, background 160ms ease;
+}
+
+.sign-out-button:hover {
+  background: rgba(255, 255, 255, 0.58);
+  transform: translateY(-1px);
+}
+
 .brand-status {
   width: 11px;
   height: 11px;
@@ -877,6 +897,10 @@ h1 {
 
   .brand {
     grid-column: 1 / -1;
+  }
+
+  .sign-out-button {
+    min-height: 34px;
   }
 
   .workspace {

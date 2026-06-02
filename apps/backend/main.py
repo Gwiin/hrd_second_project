@@ -57,6 +57,19 @@ def create_app(db_path: Path | None = None, log_path: Path | None = None) -> Fas
     def health() -> dict:
         return get_store().health()
 
+    @app.get("/favicon.ico")
+    def favicon() -> Response:
+        return Response(
+            content=(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
+                '<rect width="64" height="64" rx="16" fill="#eaf4f8"/>'
+                '<circle cx="32" cy="32" r="18" fill="#19a974"/>'
+                '<circle cx="32" cy="32" r="9" fill="#f7fbff"/>'
+                "</svg>"
+            ),
+            media_type="image/svg+xml",
+        )
+
     @app.get("/api/readings/latest")
     def latest_readings() -> dict:
         return get_store().latest_readings()
