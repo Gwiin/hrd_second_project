@@ -2,6 +2,8 @@
 
 This folder contains the Level 3 MicroPython scaffold for four Raspberry Pi Pico 2W sensor nodes.
 
+For the real sensor wiring guide with visuals, see `README.real-sensors.md`.
+
 ## Device IDs
 
 - `pico-safe-001` -> `room-1`
@@ -14,7 +16,7 @@ This folder contains the Level 3 MicroPython scaffold for four Raspberry Pi Pico
 1. Copy `config.example.py` to `config.py` on the Pico.
 2. Fill in Wi-Fi and MQTT broker settings in `config.py`.
 3. Set `DEVICE_ID` and `ZONE_ID` for the board you are flashing.
-4. Copy `main.py` and `config.py` to the Pico filesystem.
+4. Copy `main.py`, `payloads.py`, `sensors.py`, and `config.py` to the Pico filesystem.
 5. Reset the board.
 
 Do not commit `config.py`; it contains local Wi-Fi details.

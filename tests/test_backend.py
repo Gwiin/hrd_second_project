@@ -20,6 +20,7 @@ def make_payload(
     event_id: str = "test-event-1",
     sensor_id: str = "temperature",
     value: float = 23.6,
+    timestamp: datetime | None = None,
 ) -> dict:
     return {
         "event_id": event_id,
@@ -30,7 +31,7 @@ def make_payload(
         "protocol": "mock",
         "value": value,
         "unit": "celsius",
-        "timestamp": datetime(2026, 6, 1, 10, 0, tzinfo=timezone.utc).isoformat(),
+        "timestamp": (timestamp or datetime.now(timezone.utc)).isoformat(),
         "quality": "good",
         "metadata": {"seq": 7},
     }

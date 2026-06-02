@@ -4,6 +4,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 
+from shared.schemas.device_heartbeat import DeviceHeartbeat
 from shared.schemas.sensor_event import SensorEvent
 
 
@@ -36,6 +37,22 @@ def parse_reading_message(topic: str, payload: bytes) -> SensorEvent:
     )
 
 
+def parse_device_heartbeat_message(topic: str, payload: bytes) -> DeviceHeartbeat:
+    zone_id, device_id = _parse_status_topic(topic)
+    data = json.loads(payload.decode("utf-8"))
+    _assert_topic_matches_payload(data, "zone_id", zone_id)
+    _assert_topic_matches_payload(data, "device_id", device_id)
+    timestamp = data.get("timestamp")
+    measured_at = datetime.fromisoformat(timestamp) if timestamp else datetime.now(timezone.utc)
+    return DeviceHeartbeat(
+        device_id=device_id,
+        zone_id=zone_id,
+        status=data.get("status", "online"),
+        timestamp=measured_at,
+        uptime_ms=int(data.get("uptime_ms", 0)),
+    )
+
+
 def _parse_reading_topic(topic: str) -> tuple[str, str, str]:
     parts = topic.split("/")
     if len(parts) != 6:
@@ -44,6 +61,16 @@ def _parse_reading_topic(topic: str) -> tuple[str, str, str]:
     if prefix != "saferoom" or sensors_segment != "sensors" or reading_segment != "reading":
         raise MQTTTopicError(f"Invalid reading topic: {topic}")
     return zone_id, device_id, sensor_id
+
+
+def _parse_status_topic(topic: str) -> tuple[str, str]:
+    parts = topic.split("/")
+    if len(parts) != 4:
+        raise MQTTTopicError(f"Invalid status topic: {topic}")
+    prefix, zone_id, device_id, status_segment = parts
+    if prefix != "saferoom" or status_segment != "status":
+        raise MQTTTopicError(f"Invalid status topic: {topic}")
+    return zone_id, device_id
 
 
 def _assert_topic_matches_payload(data: dict[str, Any], key: str, expected: str) -> None:
