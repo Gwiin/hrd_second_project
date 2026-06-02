@@ -177,7 +177,8 @@ h1 {
 .process i,
 .realtime i,
 .zone i,
-.log-row i {
+.log-row i,
+.liveness-row i {
   width: 9px;
   height: 9px;
   flex: 0 0 auto;
@@ -185,6 +186,20 @@ h1 {
   border-radius: 999px;
   background: var(--safe);
   box-shadow: 0 0 0 5px rgba(25, 169, 116, 0.12);
+}
+
+.process i.warning,
+.zone i.warning,
+.liveness-row i.warning {
+  background: var(--warning);
+  box-shadow: 0 0 0 5px rgba(217, 134, 29, 0.14);
+}
+
+.process i.critical,
+.zone i.critical,
+.liveness-row i.critical {
+  background: var(--critical);
+  box-shadow: 0 0 0 5px rgba(212, 74, 74, 0.12);
 }
 
 .realtime.live i {
@@ -355,6 +370,16 @@ h1 {
   text-transform: capitalize;
 }
 
+.quality-badge.warning {
+  background: rgba(217, 134, 29, 0.14);
+  color: var(--warning);
+}
+
+.quality-badge.critical {
+  background: rgba(212, 74, 74, 0.14);
+  color: var(--critical);
+}
+
 .reading-card svg {
   width: 100%;
   height: 44px;
@@ -370,61 +395,84 @@ h1 {
   stroke-width: 3;
 }
 
+.reading-card.warning path {
+  stroke: var(--warning);
+}
+
+.reading-card.critical path {
+  stroke: var(--critical);
+}
+
 .timeline-panel {
   min-height: 350px;
 }
 
-.timeline {
+.blackbox-list {
+  display: grid;
+  gap: 10px;
   padding: 8px 18px 20px;
 }
 
-.axis-labels {
-  display: flex;
-  justify-content: center;
-  gap: 26px;
-  margin-bottom: 10px;
+.blackbox-event {
+  display: grid;
+  grid-template-columns: 76px auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  min-height: 58px;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.46);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.blackbox-event time,
+.blackbox-event span,
+.blackbox-event em,
+.liveness-group > span {
   color: var(--muted);
   font-size: 12px;
   font-weight: 640;
 }
 
-.timeline svg {
-  width: 100%;
-  height: 250px;
-  border: 1px solid rgba(255, 255, 255, 0.54);
-  border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.22)),
-    rgba(255, 255, 255, 0.28);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.64);
+.blackbox-event i {
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  background: var(--safe);
+  box-shadow: 0 0 0 5px rgba(25, 169, 116, 0.12);
 }
 
-.grid-lines line {
-  stroke: rgba(71, 98, 124, 0.16);
-  stroke-width: 1;
+.blackbox-event.warning i {
+  background: var(--warning);
+  box-shadow: 0 0 0 5px rgba(217, 134, 29, 0.14);
 }
 
-.trend {
-  fill: none;
-  stroke-width: 4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.blackbox-event.critical i {
+  background: var(--critical);
+  box-shadow: 0 0 0 5px rgba(212, 74, 74, 0.12);
 }
 
-.trend.red {
-  stroke: #ff6b5f;
+.blackbox-event strong {
+  display: block;
+  color: #13283d;
+  font-size: 14px;
+  font-weight: 760;
+  text-transform: capitalize;
 }
 
-.trend.blue {
-  stroke: var(--blue);
+.blackbox-event span {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-.trend.yellow {
-  stroke: #f0b242;
-}
-
-.trend.green {
-  stroke: var(--safe);
+.blackbox-event em {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(63, 126, 232, 0.1);
+  color: #356fcf;
+  font-style: normal;
+  text-transform: capitalize;
 }
 
 .right-rail {
@@ -443,7 +491,8 @@ h1 {
 }
 
 .alert-row,
-.log-row {
+.log-row,
+.liveness-row {
   display: grid;
   align-items: center;
   gap: 12px;
@@ -502,6 +551,38 @@ h1 {
 
 .log-row {
   grid-template-columns: 72px auto 1fr;
+}
+
+.liveness-panel {
+  overflow: hidden;
+}
+
+.liveness-group {
+  display: grid;
+  gap: 8px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.32);
+}
+
+.liveness-row {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 10px 0;
+  border-bottom: 0;
+}
+
+.liveness-row strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #13283d;
+  font-size: 13px;
+}
+
+.liveness-row em {
+  color: rgba(24, 39, 58, 0.72);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 720;
+  text-transform: capitalize;
 }
 
 .log-row span,
@@ -614,13 +695,16 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .panel-title,
-  .axis-labels {
+  .panel-title {
     flex-wrap: wrap;
   }
 
-  .timeline svg {
-    height: 210px;
+  .blackbox-event {
+    grid-template-columns: 58px auto minmax(0, 1fr);
+  }
+
+  .blackbox-event em {
+    grid-column: 3;
   }
 
   .log-row {

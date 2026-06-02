@@ -48,6 +48,12 @@ class ReadingStore:
     def devices(self) -> dict[str, Any]:
         return self._repository.devices()
 
+    def liveness(self) -> dict[str, Any]:
+        return self._repository.liveness()
+
+    def timeline(self, *, limit: int = 50) -> dict[str, Any]:
+        return self._repository.timeline(limit=limit)
+
     def add_device_heartbeat(self, heartbeat: DeviceHeartbeat) -> None:
         self._repository.add_device_heartbeat(heartbeat)
 

@@ -62,6 +62,14 @@ def create_app(db_path: Path | None = None, log_path: Path | None = None) -> Fas
     def devices() -> dict:
         return get_store().devices()
 
+    @app.get("/api/liveness")
+    def liveness() -> dict:
+        return get_store().liveness()
+
+    @app.get("/api/timeline")
+    def timeline(limit: Annotated[int, Query(ge=1, le=100)] = 50) -> dict:
+        return get_store().timeline(limit=limit)
+
     @app.get("/api/logs")
     def logs() -> dict:
         return get_store().logs()

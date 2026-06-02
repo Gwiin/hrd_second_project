@@ -259,6 +259,43 @@ def test_process_heartbeat_updates_health_process_status(tmp_path):
     assert health_response.json()["processes"]["collector"] == "degraded"
 
 
+def test_liveness_api_separates_devices_and_processes(tmp_path):
+    client = TestClient(make_app(tmp_path))
+
+    client.post("/internal/heartbeats/device", json=make_heartbeat())
+    client.post("/internal/heartbeats/process", json=make_process_heartbeat(status="degraded"))
+    response = client.get("/api/liveness")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["devices"][0]["kind"] == "device"
+    assert body["devices"][0]["device_id"] == "pico-safe-001"
+    assert body["devices"][0]["status"] == "online"
+    collector = next(process for process in body["processes"] if process["process"] == "collector")
+    assert collector["kind"] == "process"
+    assert collector["status"] == "degraded"
+    assert collector["last_seen_at"] is not None
+
+
+def test_timeline_api_returns_blackbox_events(tmp_path):
+    client = TestClient(make_app(tmp_path))
+
+    client.post("/internal/heartbeats/device", json=make_heartbeat())
+    client.post("/internal/heartbeats/process", json=make_process_heartbeat(process="collector", status="online"))
+    client.post("/internal/events", json=make_payload(event_id="gas-critical", sensor_id="gas", value=601))
+    response = client.get("/api/timeline?limit=20")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["count"] >= 4
+    event_types = {entry["type"] for entry in body["events"]}
+    assert {"reading", "alert", "device_heartbeat", "process_heartbeat", "log"} <= event_types
+    alert = next(entry for entry in body["events"] if entry["type"] == "alert")
+    assert alert["tone"] == "critical"
+    assert alert["device_id"] == "pico-safe-001"
+    assert alert["sensor_id"] == "gas"
+
+
 def test_invalid_event_payload_writes_developer_file_log(tmp_path):
     log_path = tmp_path / "logs" / "saferoom.log"
     client = TestClient(make_app(tmp_path, log_path=log_path))

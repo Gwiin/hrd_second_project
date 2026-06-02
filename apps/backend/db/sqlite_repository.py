@@ -195,6 +195,46 @@ class SQLiteRepository:
                 statuses[row["process"]] = row["status"]
         return statuses
 
+    def liveness(self) -> dict[str, Any]:
+        devices = self.devices()["devices"]
+        for device in devices:
+            device["kind"] = "device"
+
+        processes = {
+            "backend": {"kind": "process", "process": "backend", "status": "online", "last_seen_at": None, "metadata": {}},
+            "collector": {
+                "kind": "process",
+                "process": "collector",
+                "status": "simulated",
+                "last_seen_at": None,
+                "metadata": {},
+            },
+            "worker": {"kind": "process", "process": "worker", "status": "simulated", "last_seen_at": None, "metadata": {}},
+        }
+        with self._connect() as conn:
+            for row in conn.execute("SELECT process, status, last_seen_at, metadata_json FROM process_heartbeats"):
+                processes[row["process"]] = {
+                    "kind": "process",
+                    "process": row["process"],
+                    "status": row["status"],
+                    "last_seen_at": row["last_seen_at"],
+                    "metadata": json.loads(row["metadata_json"]),
+                }
+        return {"devices": devices, "processes": list(processes.values())}
+
+    def timeline(self, *, limit: int = 50) -> dict[str, Any]:
+        limit = max(1, min(limit, 100))
+        events: list[dict[str, Any]] = []
+        with self._connect() as conn:
+            events.extend(_reading_timeline_events(conn, limit))
+            events.extend(_alert_timeline_events(conn, limit))
+            events.extend(_log_timeline_events(conn, limit))
+            events.extend(_device_heartbeat_timeline_events(conn))
+            events.extend(_process_heartbeat_timeline_events(conn))
+        events.sort(key=lambda event: event["timestamp"], reverse=True)
+        events = events[:limit]
+        return {"events": events, "count": len(events)}
+
     def logs(self) -> dict[str, Any]:
         with self._connect() as conn:
             logs = [
@@ -430,3 +470,152 @@ def _stale_sensor_alerts(conn: sqlite3.Connection) -> list[dict[str, Any]]:
             }
         )
     return alerts
+
+
+def _reading_timeline_events(conn: sqlite3.Connection, limit: int) -> list[dict[str, Any]]:
+    query = """
+        SELECT reading_id, device_id, zone_id, sensor_id, value, unit, quality,
+               measured_at, received_at, payload_json
+        FROM sensor_readings
+        ORDER BY reading_id DESC
+        LIMIT ?
+    """
+    events = []
+    for row in conn.execute(query, (limit,)):
+        reading = json.loads(row["payload_json"])
+        events.append(
+            {
+                "id": f"reading-{row['reading_id']}",
+                "type": "reading",
+                "timestamp": row["received_at"],
+                "title": f"{row['sensor_id']} reading",
+                "message": f"{row['device_id']} {row['sensor_id']}: {row['value']} {row['unit']}",
+                "tone": _quality_tone(row["quality"]),
+                "zone_id": row["zone_id"],
+                "device_id": row["device_id"],
+                "sensor_id": row["sensor_id"],
+                "value": reading["value"],
+                "unit": row["unit"],
+                "quality": row["quality"],
+                "measured_at": row["measured_at"],
+            }
+        )
+    return events
+
+
+def _alert_timeline_events(conn: sqlite3.Connection, limit: int) -> list[dict[str, Any]]:
+    query = """
+        SELECT alert_id, level, code, message, zone_id, device_id, sensor_id,
+               value, status, created_at, resolved_at
+        FROM alerts
+        ORDER BY alert_id DESC
+        LIMIT ?
+    """
+    events = []
+    for row in conn.execute(query, (limit,)):
+        events.append(
+            {
+                "id": f"alert-{row['alert_id']}",
+                "type": "alert",
+                "timestamp": row["created_at"],
+                "title": row["code"],
+                "message": row["message"],
+                "tone": row["level"],
+                "zone_id": row["zone_id"],
+                "device_id": row["device_id"],
+                "sensor_id": row["sensor_id"],
+                "value": row["value"],
+                "status": row["status"],
+                "resolved_at": row["resolved_at"],
+            }
+        )
+    return events
+
+
+def _log_timeline_events(conn: sqlite3.Connection, limit: int) -> list[dict[str, Any]]:
+    query = """
+        SELECT log_id, timestamp, level, message
+        FROM system_logs
+        ORDER BY log_id DESC
+        LIMIT ?
+    """
+    return [
+        {
+            "id": f"log-{row['log_id']}",
+            "type": "log",
+            "timestamp": row["timestamp"],
+            "title": row["level"],
+            "message": row["message"],
+            "tone": _log_tone(row["level"]),
+        }
+        for row in conn.execute(query, (limit,))
+    ]
+
+
+def _device_heartbeat_timeline_events(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    query = """
+        SELECT device_id, zone_id, status, last_seen_at
+        FROM devices
+        WHERE last_seen_at IS NOT NULL
+        ORDER BY last_seen_at DESC
+    """
+    return [
+        {
+            "id": f"device-heartbeat-{row['device_id']}",
+            "type": "device_heartbeat",
+            "timestamp": row["last_seen_at"],
+            "title": "device heartbeat",
+            "message": f"{row['device_id']} reported {row['status']}",
+            "tone": "safe" if _computed_device_status(row["last_seen_at"]) == "online" else "critical",
+            "zone_id": row["zone_id"],
+            "device_id": row["device_id"],
+            "status": _computed_device_status(row["last_seen_at"]),
+        }
+        for row in conn.execute(query)
+    ]
+
+
+def _process_heartbeat_timeline_events(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    query = """
+        SELECT process, status, last_seen_at, metadata_json
+        FROM process_heartbeats
+        ORDER BY last_seen_at DESC
+    """
+    return [
+        {
+            "id": f"process-heartbeat-{row['process']}",
+            "type": "process_heartbeat",
+            "timestamp": row["last_seen_at"],
+            "title": "process heartbeat",
+            "message": f"{row['process']} reported {row['status']}",
+            "tone": _process_tone(row["status"]),
+            "process": row["process"],
+            "status": row["status"],
+            "metadata": json.loads(row["metadata_json"]),
+        }
+        for row in conn.execute(query)
+    ]
+
+
+def _quality_tone(quality: str) -> str:
+    if quality in {"bad", "missing"}:
+        return "critical"
+    if quality in {"uncertain", "stale"}:
+        return "warning"
+    return "safe"
+
+
+def _log_tone(level: str) -> str:
+    if level in {"error", "critical"}:
+        return "critical"
+    if level == "warning":
+        return "warning"
+    return "safe"
+
+
+def _process_tone(status: str) -> str:
+    if status == "offline":
+        return "critical"
+    if status in {"degraded", "simulated"}:
+        return "warning"
+    return "safe"
