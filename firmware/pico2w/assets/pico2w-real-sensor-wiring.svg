@@ -1,0 +1,157 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Pico SafeRoom Pico 2W real sensor wiring diagram</title>
+  <desc id="desc">A labeled wiring diagram showing Raspberry Pi Pico 2W connections to DHT temperature humidity sensor, PIR motion sensor, analog gas sensor, and LDR light sensor divider.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="currentColor" />
+    </marker>
+    <style>
+      .title { font: 700 38px Arial, sans-serif; fill: #102033; }
+      .subtitle { font: 500 21px Arial, sans-serif; fill: #405064; }
+      .label { font: 700 18px Arial, sans-serif; fill: #102033; }
+      .small { font: 500 15px Arial, sans-serif; fill: #405064; }
+      .tiny { font: 500 12px Arial, sans-serif; fill: #405064; }
+      .pin { font: 700 13px Arial, sans-serif; fill: #13243a; }
+      .module-title { font: 700 19px Arial, sans-serif; fill: #102033; }
+      .module-sub { font: 500 14px Arial, sans-serif; fill: #405064; }
+      .note { font: 700 16px Arial, sans-serif; fill: #7a3300; }
+      .wire-power { stroke: #e53935; color: #e53935; }
+      .wire-ground { stroke: #20252b; color: #20252b; }
+      .wire-dht { stroke: #f57c00; color: #f57c00; }
+      .wire-pir { stroke: #1976d2; color: #1976d2; }
+      .wire-gas { stroke: #2e7d32; color: #2e7d32; }
+      .wire-light { stroke: #7b1fa2; color: #7b1fa2; }
+      .wire { fill: none; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; marker-end: url(#arrow); }
+      .thin-wire { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1600" height="1000" fill="#f6f8fb" />
+  <rect x="38" y="34" width="1524" height="930" rx="26" fill="#ffffff" stroke="#d9e2ef" stroke-width="2" />
+
+  <text x="70" y="88" class="title">Pico 2W Real Sensor Wiring</text>
+  <text x="70" y="123" class="subtitle">Use the same wiring on all four boards. Change only DEVICE_ID and ZONE_ID in each board's config.py.</text>
+
+  <g transform="translate(110,190)">
+    <rect x="0" y="0" width="430" height="650" rx="36" fill="#1f7a75" stroke="#14504d" stroke-width="5" />
+    <rect x="136" y="-40" width="158" height="56" rx="10" fill="#c8d0d8" stroke="#8c98a5" stroke-width="3" />
+    <rect x="164" y="-31" width="102" height="38" rx="6" fill="#eef2f7" stroke="#adb7c3" stroke-width="2" />
+    <rect x="68" y="72" width="294" height="500" rx="24" fill="#258f87" stroke="#1b6862" stroke-width="3" />
+    <text x="215" y="126" text-anchor="middle" class="label" fill="#ffffff">Raspberry Pi Pico 2W</text>
+    <text x="215" y="153" text-anchor="middle" class="small" fill="#e5fffb">top view, USB up</text>
+
+    <rect x="128" y="230" width="174" height="120" rx="14" fill="#173d4c" stroke="#0f2c37" stroke-width="3" />
+    <text x="215" y="278" text-anchor="middle" class="label" fill="#ffffff">RP2350</text>
+    <text x="215" y="307" text-anchor="middle" class="small" fill="#cce7ef">Pico 2W</text>
+
+    <circle cx="78" cy="74" r="11" fill="#dbe3ea" stroke="#95a3af" stroke-width="2" />
+    <circle cx="352" cy="74" r="11" fill="#dbe3ea" stroke="#95a3af" stroke-width="2" />
+    <circle cx="78" cy="574" r="11" fill="#dbe3ea" stroke="#95a3af" stroke-width="2" />
+    <circle cx="352" cy="574" r="11" fill="#dbe3ea" stroke="#95a3af" stroke-width="2" />
+
+    <g id="right-pins">
+      <circle id="pin-3v3" cx="420" cy="110" r="10" fill="#ffebee" stroke="#e53935" stroke-width="3" />
+      <text x="326" y="116" class="pin">3V3(OUT)</text>
+      <circle id="pin-gnd" cx="420" cy="175" r="10" fill="#eceff1" stroke="#20252b" stroke-width="3" />
+      <text x="356" y="181" class="pin">GND</text>
+      <circle id="pin-gp27" cx="420" cy="242" r="10" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="3" />
+      <text x="306" y="248" class="pin">GP27 / ADC1</text>
+      <circle id="pin-gp26" cx="420" cy="306" r="10" fill="#e8f5e9" stroke="#2e7d32" stroke-width="3" />
+      <text x="306" y="312" class="pin">GP26 / ADC0</text>
+      <circle id="pin-gp17" cx="420" cy="433" r="10" fill="#e3f2fd" stroke="#1976d2" stroke-width="3" />
+      <text x="354" y="439" class="pin">GP17</text>
+      <circle id="pin-gp16" cx="420" cy="498" r="10" fill="#fff3e0" stroke="#f57c00" stroke-width="3" />
+      <text x="354" y="504" class="pin">GP16</text>
+    </g>
+
+    <g id="left-pins">
+      <circle cx="10" cy="110" r="8" fill="#d7fff8" stroke="#14504d" stroke-width="2" />
+      <circle cx="10" cy="175" r="8" fill="#d7fff8" stroke="#14504d" stroke-width="2" />
+      <circle cx="10" cy="242" r="8" fill="#d7fff8" stroke="#14504d" stroke-width="2" />
+      <circle cx="10" cy="306" r="8" fill="#d7fff8" stroke="#14504d" stroke-width="2" />
+      <circle cx="10" cy="370" r="8" fill="#d7fff8" stroke="#14504d" stroke-width="2" />
+      <circle cx="10" cy="433" r="8" fill="#d7fff8" stroke="#14504d" stroke-width="2" />
+      <circle cx="10" cy="498" r="8" fill="#d7fff8" stroke="#14504d" stroke-width="2" />
+    </g>
+  </g>
+
+  <g transform="translate(680,175)">
+    <rect x="0" y="0" width="310" height="158" rx="20" fill="#fff8e1" stroke="#f57c00" stroke-width="4" />
+    <text x="26" y="38" class="module-title">DHT temp/humidity</text>
+    <text x="26" y="65" class="module-sub">DATA to GP16</text>
+    <rect x="216" y="38" width="60" height="88" rx="9" fill="#e8dcc7" stroke="#9b8d75" stroke-width="3" />
+    <circle cx="233" cy="60" r="4" fill="#7b6b55" />
+    <circle cx="258" cy="60" r="4" fill="#7b6b55" />
+    <circle cx="233" cy="83" r="4" fill="#7b6b55" />
+    <circle cx="258" cy="83" r="4" fill="#7b6b55" />
+    <text x="26" y="109" class="tiny">VCC: 3V3   GND: GND</text>
+  </g>
+
+  <g transform="translate(1045,170)">
+    <rect x="0" y="0" width="330" height="165" rx="20" fill="#e3f2fd" stroke="#1976d2" stroke-width="4" />
+    <text x="26" y="38" class="module-title">PIR motion sensor</text>
+    <text x="26" y="65" class="module-sub">OUT to GP17</text>
+    <circle cx="250" cy="82" r="48" fill="#f4fbff" stroke="#7fb3d5" stroke-width="5" />
+    <circle cx="250" cy="82" r="28" fill="#d7eefc" stroke="#9dcce6" stroke-width="2" />
+    <text x="26" y="115" class="tiny">VCC: sensor-rated   GND: GND</text>
+  </g>
+
+  <g transform="translate(690,475)">
+    <rect x="0" y="0" width="332" height="175" rx="20" fill="#e8f5e9" stroke="#2e7d32" stroke-width="4" />
+    <text x="26" y="38" class="module-title">Gas/smoke analog sensor</text>
+    <text x="26" y="65" class="module-sub">AOUT to GP26 / ADC0</text>
+    <circle cx="258" cy="95" r="46" fill="#d6d6d6" stroke="#777" stroke-width="4" />
+    <circle cx="258" cy="95" r="28" fill="#f2f2f2" stroke="#aaa" stroke-width="2" />
+    <line x1="232" y1="75" x2="284" y2="115" stroke="#999" stroke-width="2" />
+    <line x1="284" y1="75" x2="232" y2="115" stroke="#999" stroke-width="2" />
+    <text x="26" y="121" class="tiny">Analog output must be 0-3.3V</text>
+  </g>
+
+  <g transform="translate(1058,520)">
+    <rect x="0" y="0" width="322" height="215" rx="20" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="4" />
+    <text x="26" y="38" class="module-title">Light sensor divider</text>
+    <text x="26" y="65" class="module-sub">Signal to GP27 / ADC1</text>
+    <line x1="220" y1="54" x2="220" y2="164" stroke="#6d4c41" stroke-width="5" />
+    <polyline points="220,82 198,96 242,110 198,124 242,138 220,152" fill="none" stroke="#6d4c41" stroke-width="5" stroke-linejoin="round" />
+    <circle cx="220" cy="54" r="16" fill="#fff176" stroke="#d4b800" stroke-width="3" />
+    <line x1="164" y1="110" x2="220" y2="110" stroke="#7b1fa2" stroke-width="4" />
+    <text x="26" y="113" class="tiny">3V3 -> LDR -> signal -> 10k -> GND</text>
+  </g>
+
+  <path class="wire wire-dht" d="M530,688 C615,665 650,275 680,252" />
+  <path class="wire wire-pir" d="M530,623 C650,610 930,238 1045,245" />
+  <path class="wire wire-gas" d="M530,496 C610,500 642,558 690,558" />
+  <path class="wire wire-light" d="M530,432 C660,420 910,628 1058,630" />
+
+  <path class="wire wire-power" d="M530,300 C615,210 650,205 680,205" />
+  <path class="thin-wire wire-power" d="M530,300 C760,115 1110,118 1230,170" />
+  <path class="thin-wire wire-power" d="M530,300 C650,420 700,505 690,535" />
+  <path class="thin-wire wire-power" d="M530,300 C860,375 1030,545 1058,558" />
+
+  <path class="wire wire-ground" d="M530,365 C620,330 654,303 680,303" />
+  <path class="thin-wire wire-ground" d="M530,365 C760,245 1090,288 1120,310" />
+  <path class="thin-wire wire-ground" d="M530,365 C640,480 688,600 690,620" />
+  <path class="thin-wire wire-ground" d="M530,365 C820,485 1050,690 1058,695" />
+
+  <g transform="translate(70,885)">
+    <rect x="0" y="0" width="1460" height="54" rx="14" fill="#fff4e6" stroke="#f0b16a" stroke-width="2" />
+    <text x="24" y="34" class="note">Safety:</text>
+    <text x="92" y="34" class="small">Pico 2W GPIO and ADC pins are 3.3V only. Use level shifting or a voltage divider if a sensor output can exceed 3.3V.</text>
+  </g>
+
+  <g transform="translate(70,145)">
+    <rect x="0" y="0" width="488" height="36" rx="10" fill="#eef6ff" stroke="#bfdbfe" stroke-width="2" />
+    <text x="16" y="24" class="small">Default pins: DHT GP16, PIR GP17, Gas ADC0/GP26, Light ADC1/GP27</text>
+  </g>
+
+  <g transform="translate(1090,760)">
+    <rect x="0" y="0" width="330" height="86" rx="15" fill="#f8fafc" stroke="#d5dee9" stroke-width="2" />
+    <text x="22" y="30" class="label">Color key</text>
+    <line x1="22" y1="52" x2="58" y2="52" class="thin-wire wire-power" />
+    <text x="66" y="57" class="tiny">3V3 power</text>
+    <line x1="160" y1="52" x2="196" y2="52" class="thin-wire wire-ground" />
+    <text x="204" y="57" class="tiny">GND</text>
+    <line x1="22" y1="72" x2="58" y2="72" class="thin-wire wire-dht" />
+    <text x="66" y="77" class="tiny">signals</text>
+  </g>
+</svg>

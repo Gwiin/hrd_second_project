@@ -2,7 +2,6 @@ import json
 import time
 
 import network
-from machine import ADC
 from umqtt.simple import MQTTClient
 
 from config import (
@@ -14,15 +13,8 @@ from config import (
     WIFI_SSID,
     ZONE_ID,
 )
-
-
-SENSORS = {
-    "temperature": "celsius",
-    "humidity": "%",
-    "light": "lux",
-    "motion": "bool",
-    "gas": "ppm",
-}
+from payloads import heartbeat_payload, heartbeat_topic, reading_payload, reading_topic
+from sensors import read_all_sensors
 
 
 def connect_wifi():
@@ -40,14 +32,6 @@ def mqtt_client():
     return client
 
 
-def reading_topic(sensor_id):
-    return "saferoom/{}/{}/sensors/{}/reading".format(ZONE_ID, DEVICE_ID, sensor_id)
-
-
-def heartbeat_topic():
-    return "saferoom/{}/{}/status".format(ZONE_ID, DEVICE_ID)
-
-
 def timestamp():
     year, month, day, hour, minute, second, _, _ = time.localtime()
     return "{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}+00:00".format(
@@ -60,43 +44,16 @@ def timestamp():
     )
 
 
-def virtual_readings(seq):
-    adc_value = ADC(4).read_u16()
-    temperature = 20 + (adc_value / 65535) * 15
-    return {
-        "temperature": round(temperature, 1),
-        "humidity": 45 + (seq % 10),
-        "light": 250 + (seq % 20) * 15,
-        "motion": seq % 17 == 0,
-        "gas": round(0.25 + (seq % 8) * 0.03, 2),
-    }
-
-
 def publish_readings(client, seq):
     now = timestamp()
-    for sensor_id, value in virtual_readings(seq).items():
-        payload = {
-            "device_id": DEVICE_ID,
-            "zone_id": ZONE_ID,
-            "sensor_id": sensor_id,
-            "value": value,
-            "unit": SENSORS[sensor_id],
-            "timestamp": now,
-            "seq": seq,
-        }
-        client.publish(reading_topic(sensor_id), json.dumps(payload))
+    for sensor_id, value, unit in read_all_sensors():
+        payload = reading_payload(DEVICE_ID, ZONE_ID, sensor_id, value, unit, now, seq)
+        client.publish(reading_topic(ZONE_ID, DEVICE_ID, sensor_id), json.dumps(payload))
 
 
 def publish_heartbeat(client, seq):
-    payload = {
-        "device_id": DEVICE_ID,
-        "zone_id": ZONE_ID,
-        "status": "online",
-        "timestamp": timestamp(),
-        "uptime_ms": time.ticks_ms(),
-        "seq": seq,
-    }
-    client.publish(heartbeat_topic(), json.dumps(payload))
+    payload = heartbeat_payload(DEVICE_ID, ZONE_ID, timestamp(), time.ticks_ms(), seq)
+    client.publish(heartbeat_topic(ZONE_ID, DEVICE_ID), json.dumps(payload))
 
 
 def main():
