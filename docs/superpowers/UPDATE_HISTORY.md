@@ -10,7 +10,9 @@
 - 완료: 실제 Pico 2W용 MicroPython real-sensor firmware 경로.
 - 완료: 팀원용 한국어 README/SETUP/firmware 문서.
 - 완료: Apple Liquid Glass 스타일 dashboard redesign 구현.
-- 다음 작업: 실제 센서 bring-up 후 real data 상태에서 dashboard calibration/status UI 보강.
+- 완료: 로그인 전 dashboard blur 처리, email auth session, Google/Apple/Kakao OAuth entrypoint와 callback exchange 구현.
+- 완료: desktop launcher 기본 실행 경로를 simulator가 아닌 실제 Pico 2W + MQTT collector 모드로 변경.
+- 다음 작업: 실제 OAuth provider credential 등록과 실제 센서 bring-up 후 dashboard calibration/status UI 보강.
 
 ## 최신 디자인 기준
 
@@ -88,6 +90,42 @@ Apple Liquid Glass dashboard visual은 승인 완료 상태입니다.
 - `npm --prefix frontend run build`
 - desktop screenshot 검증
 - mobile screenshot 검증
+
+### Auth Gate, Social Login Entry, Real-Board Launcher
+
+상태: 구현 진행 중
+
+- 로그인 전에는 dashboard를 blur 처리하고 auth card만 조작 가능하도록 변경.
+- email/password 일반 회원가입과 로그인 API를 추가.
+- password는 SQLite에 plain text로 저장하지 않고 PBKDF2 hash로 저장.
+- `saferoom_session` HTTP-only cookie 기반 session을 추가.
+- `/api/auth/me`, `/api/auth/signup`, `/api/auth/login`, `/api/auth/logout` 추가.
+- Google, Apple, Kakao social auth provider 목록, OAuth start redirect endpoint, callback token/profile exchange를 추가.
+- Google/Kakao는 userinfo endpoint를 통해 profile을 읽고, Apple은 token response의 `id_token` payload에서 profile을 읽음.
+- 실제 provider console credential과 redirect URL 등록 후 live callback 검증이 필요함.
+- desktop launcher 기본 collector를 simulator에서 MQTT collector로 변경.
+- browser launch mode를 `apps.desktop.app --open browser`로 추가.
+- simulator는 개발/테스트 전용 별도 명령으로 문서화.
+
+관련 주요 파일:
+
+- `apps/backend/auth.py`
+- `apps/backend/main.py`
+- `apps/backend/store.py`
+- `apps/backend/db/sqlite_repository.py`
+- `apps/desktop/app.py`
+- `frontend/src/App.tsx`
+- `frontend/src/App.css`
+- `SETUP.md`
+- `SETUP.ko.md`
+
+검증:
+
+- `.venv/bin/python -m pytest -v`
+- `npm --prefix frontend run build`
+- live FastAPI auth cookie smoke test
+- desktop/mobile screenshot 검증
+- mocked Google/Apple/Kakao OAuth callback tests
 
 ## 2026-06-01
 

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import argparse
 import subprocess
 import sys
 import time
 import urllib.request
+import webbrowser
 from contextlib import suppress
 
 
@@ -23,30 +25,39 @@ def wait_for_backend(url: str = BACKEND_URL, timeout_seconds: float = 15.0) -> b
 def start_processes() -> list[subprocess.Popen]:
     commands = [
         [sys.executable, "-m", "apps.backend.main"],
-        [sys.executable, "-m", "apps.collector.main", "--backend-url", BACKEND_URL],
+        [sys.executable, "-m", "apps.collector.mqtt_client", "--backend-url", BACKEND_URL],
         [sys.executable, "-m", "apps.worker.main"],
     ]
     return [subprocess.Popen(command) for command in commands]
 
 
-def open_dashboard(url: str = BACKEND_URL) -> None:
+def open_dashboard(url: str = BACKEND_URL, *, mode: str = "pywebview") -> None:
+    if mode == "browser":
+        webbrowser.open(url)
+        return
+
     try:
         import webview
     except ImportError:
-        print(f"pywebview is not installed. Open {url} in a browser.", flush=True)
+        print(f"pywebview is not installed. Opening {url} in a browser.", flush=True)
+        webbrowser.open(url)
         return
 
     webview.create_window("Pico SafeRoom", url, width=1440, height=900)
     webview.start()
 
 
-def main() -> None:
+def main(argv: list[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(description="Pico SafeRoom desktop launcher")
+    parser.add_argument("--open", choices=("pywebview", "browser"), default="pywebview")
+    args = parser.parse_args(argv)
+
     processes = start_processes()
     try:
         if not wait_for_backend():
             print(f"Backend did not become ready. Try opening {BACKEND_URL} after checking logs.", flush=True)
             return
-        open_dashboard()
+        open_dashboard(mode=args.open)
     finally:
         for process in processes:
             process.terminate()

@@ -297,6 +297,127 @@ class SQLiteRepository:
             raise KeyError(alert_id)
         return {"alert": dict(row)}
 
+    def get_user_by_email(self, email: str) -> dict[str, Any] | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT user_id, email, display_name, password_hash, primary_provider, created_at
+                FROM users
+                WHERE email = ?
+                """,
+                (email,),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def create_email_user(self, email: str, display_name: str, password_hash: str) -> dict[str, Any]:
+        created_at = datetime.now(timezone.utc).isoformat()
+        with self._connect() as conn:
+            cursor = conn.execute(
+                """
+                INSERT INTO users (email, display_name, password_hash, primary_provider, created_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (email, display_name, password_hash, "email", created_at),
+            )
+            user_id = cursor.lastrowid
+            row = conn.execute(
+                """
+                SELECT user_id, email, display_name, password_hash, primary_provider, created_at
+                FROM users
+                WHERE user_id = ?
+                """,
+                (user_id,),
+            ).fetchone()
+        return dict(row)
+
+    def create_auth_session(self, user_id: int, session_token: str, expires_at: str) -> None:
+        created_at = datetime.now(timezone.utc).isoformat()
+        with self._connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO auth_sessions (session_token, user_id, created_at, expires_at)
+                VALUES (?, ?, ?, ?)
+                """,
+                (session_token, user_id, created_at, expires_at),
+            )
+
+    def get_user_by_session(self, session_token: str) -> dict[str, Any] | None:
+        now = datetime.now(timezone.utc).isoformat()
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT u.user_id, u.email, u.display_name, u.password_hash, u.primary_provider, u.created_at
+                FROM auth_sessions s
+                JOIN users u ON u.user_id = s.user_id
+                WHERE s.session_token = ? AND s.expires_at > ?
+                """,
+                (session_token, now),
+            ).fetchone()
+        return dict(row) if row else None
+
+    def delete_auth_session(self, session_token: str) -> None:
+        with self._connect() as conn:
+            conn.execute("DELETE FROM auth_sessions WHERE session_token = ?", (session_token,))
+
+    def get_or_create_social_user(
+        self,
+        *,
+        provider: str,
+        provider_subject: str,
+        email: str,
+        display_name: str,
+    ) -> dict[str, Any]:
+        linked_at = datetime.now(timezone.utc).isoformat()
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT u.user_id, u.email, u.display_name, u.password_hash, u.primary_provider, u.created_at
+                FROM auth_accounts a
+                JOIN users u ON u.user_id = a.user_id
+                WHERE a.provider = ? AND a.provider_subject = ?
+                """,
+                (provider, provider_subject),
+            ).fetchone()
+            if row:
+                return dict(row)
+
+            user_row = conn.execute(
+                """
+                SELECT user_id, email, display_name, password_hash, primary_provider, created_at
+                FROM users
+                WHERE email = ?
+                """,
+                (email,),
+            ).fetchone()
+            if user_row:
+                user_id = user_row["user_id"]
+            else:
+                cursor = conn.execute(
+                    """
+                    INSERT INTO users (email, display_name, password_hash, primary_provider, created_at)
+                    VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (email, display_name, None, provider, linked_at),
+                )
+                user_id = cursor.lastrowid
+
+            conn.execute(
+                """
+                INSERT OR IGNORE INTO auth_accounts (provider, provider_subject, user_id, email, linked_at)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (provider, provider_subject, user_id, email, linked_at),
+            )
+            linked_user = conn.execute(
+                """
+                SELECT user_id, email, display_name, password_hash, primary_provider, created_at
+                FROM users
+                WHERE user_id = ?
+                """,
+                (user_id,),
+            ).fetchone()
+        return dict(linked_user)
+
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self._db_path)
         conn.row_factory = sqlite3.Row
@@ -367,6 +488,33 @@ class SQLiteRepository:
                     status TEXT NOT NULL,
                     last_seen_at TEXT NOT NULL,
                     metadata_json TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS users (
+                    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    email TEXT NOT NULL UNIQUE,
+                    display_name TEXT NOT NULL,
+                    password_hash TEXT,
+                    primary_provider TEXT NOT NULL DEFAULT 'email',
+                    created_at TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS auth_accounts (
+                    provider TEXT NOT NULL,
+                    provider_subject TEXT NOT NULL,
+                    user_id INTEGER NOT NULL,
+                    email TEXT,
+                    linked_at TEXT NOT NULL,
+                    PRIMARY KEY (provider, provider_subject),
+                    FOREIGN KEY (user_id) REFERENCES users(user_id)
+                );
+
+                CREATE TABLE IF NOT EXISTS auth_sessions (
+                    session_token TEXT PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    created_at TEXT NOT NULL,
+                    expires_at TEXT NOT NULL,
+                    FOREIGN KEY (user_id) REFERENCES users(user_id)
                 );
                 """
             )

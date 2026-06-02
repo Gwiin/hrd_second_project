@@ -1,9 +1,12 @@
 import importlib
+import base64
+import json
 from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+import apps.backend.auth as backend_auth
 import apps.backend.main as backend_main
 from apps.backend.main import create_app
 
@@ -303,3 +306,288 @@ def test_invalid_event_payload_writes_developer_file_log(tmp_path):
     client.post("/internal/events", json={"device_id": "pico-safe-001"})
 
     assert "warning Invalid event payload rejected" in log_path.read_text()
+
+
+def test_email_signup_creates_session_and_me_returns_user(tmp_path):
+    client = TestClient(make_app(tmp_path))
+
+    response = client.post(
+        "/api/auth/signup",
+        json={"email": "team@example.com", "password": "safe-password-123"},
+    )
+    me_response = client.get("/api/auth/me")
+
+    assert response.status_code == 201
+    assert "saferoom_session" in response.headers["set-cookie"]
+    assert response.json()["user"] == {
+        "user_id": 1,
+        "email": "team@example.com",
+        "display_name": "team",
+        "provider": "email",
+    }
+    assert me_response.status_code == 200
+    assert me_response.json()["authenticated"] is True
+    assert me_response.json()["user"]["email"] == "team@example.com"
+
+
+def test_email_login_rejects_wrong_password_and_accepts_correct_password(tmp_path):
+    client = TestClient(make_app(tmp_path))
+    client.post(
+        "/api/auth/signup",
+        json={"email": "team@example.com", "password": "safe-password-123"},
+    )
+    client.post("/api/auth/logout")
+
+    wrong_response = client.post(
+        "/api/auth/login",
+        json={"email": "team@example.com", "password": "wrong-password"},
+    )
+    login_response = client.post(
+        "/api/auth/login",
+        json={"email": "team@example.com", "password": "safe-password-123"},
+    )
+
+    assert wrong_response.status_code == 401
+    assert login_response.status_code == 200
+    assert login_response.json()["user"]["email"] == "team@example.com"
+
+
+def test_logout_clears_authenticated_session(tmp_path):
+    client = TestClient(make_app(tmp_path))
+    client.post(
+        "/api/auth/signup",
+        json={"email": "team@example.com", "password": "safe-password-123"},
+    )
+
+    response = client.post("/api/auth/logout")
+    me_response = client.get("/api/auth/me")
+
+    assert response.status_code == 200
+    assert "saferoom_session=\"\"" in response.headers["set-cookie"]
+    assert me_response.status_code == 200
+    assert me_response.json() == {"authenticated": False, "user": None}
+
+
+def test_duplicate_email_signup_is_rejected(tmp_path):
+    client = TestClient(make_app(tmp_path))
+    payload = {"email": "team@example.com", "password": "safe-password-123"}
+
+    first_response = client.post("/api/auth/signup", json=payload)
+    duplicate_response = client.post("/api/auth/signup", json=payload)
+
+    assert first_response.status_code == 201
+    assert duplicate_response.status_code == 409
+    assert duplicate_response.json()["detail"] == "Email already registered"
+
+
+def test_social_auth_providers_include_google_apple_and_kakao(tmp_path):
+    client = TestClient(make_app(tmp_path))
+
+    response = client.get("/api/auth/social/providers")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert [provider["provider"] for provider in body["providers"]] == ["google", "apple", "kakao"]
+    assert {provider["configured"] for provider in body["providers"]} == {False}
+
+
+def test_configured_social_provider_start_redirects(monkeypatch, tmp_path):
+    monkeypatch.setenv("PICO_AUTH_GOOGLE_CLIENT_ID", "google-client")
+    monkeypatch.setenv("PICO_AUTH_GOOGLE_CLIENT_SECRET", "google-secret")
+    monkeypatch.setenv("PICO_AUTH_REDIRECT_BASE_URL", "http://127.0.0.1:8000")
+    client = TestClient(make_app(tmp_path))
+
+    response = client.get("/api/auth/social/google/start", follow_redirects=False)
+
+    assert response.status_code == 307
+    assert "accounts.google.com" in response.headers["location"]
+    assert "client_id=google-client" in response.headers["location"]
+    assert "saferoom_oauth_state_google" in response.headers["set-cookie"]
+
+
+def test_social_callback_rejects_state_mismatch(monkeypatch, tmp_path):
+    monkeypatch.setenv("PICO_AUTH_GOOGLE_CLIENT_ID", "google-client")
+    monkeypatch.setenv("PICO_AUTH_GOOGLE_CLIENT_SECRET", "google-secret")
+    client = TestClient(make_app(tmp_path))
+    client.cookies.set("saferoom_oauth_state_google", "expected-state")
+
+    response = client.get("/api/auth/social/google/callback?code=oauth-code&state=wrong-state")
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Invalid OAuth state"
+
+
+def test_google_social_callback_creates_session(monkeypatch, tmp_path):
+    monkeypatch.setenv("PICO_AUTH_GOOGLE_CLIENT_ID", "google-client")
+    monkeypatch.setenv("PICO_AUTH_GOOGLE_CLIENT_SECRET", "google-secret")
+    calls = []
+
+    class FakeResponse:
+        def __init__(self, payload):
+            self._payload = payload
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return self._payload
+
+    class FakeClient:
+        def __init__(self, timeout):
+            self.timeout = timeout
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return None
+
+        def post(self, url, data):
+            calls.append(("post", url, data))
+            return FakeResponse({"access_token": "google-access-token"})
+
+        def get(self, url, headers):
+            calls.append(("get", url, headers))
+            return FakeResponse(
+                {
+                    "sub": "google-subject-1",
+                    "email": "google-user@example.com",
+                    "name": "Google User",
+                }
+            )
+
+    monkeypatch.setattr(backend_auth, "httpx", type("FakeHttpx", (), {"Client": FakeClient}), raising=False)
+    client = TestClient(make_app(tmp_path))
+    client.cookies.set("saferoom_oauth_state_google", "expected-state")
+
+    response = client.get(
+        "/api/auth/social/google/callback?code=oauth-code&state=expected-state",
+        follow_redirects=False,
+    )
+    me_response = client.get("/api/auth/me")
+
+    assert response.status_code == 307
+    assert response.headers["location"] == "/"
+    assert "saferoom_session" in response.headers["set-cookie"]
+    assert me_response.json()["authenticated"] is True
+    assert me_response.json()["user"] == {
+        "user_id": 1,
+        "email": "google-user@example.com",
+        "display_name": "Google User",
+        "provider": "google",
+    }
+    assert calls[0][0] == "post"
+    assert calls[0][1] == "https://oauth2.googleapis.com/token"
+    assert calls[1] == (
+        "get",
+        "https://openidconnect.googleapis.com/v1/userinfo",
+        {"Authorization": "Bearer google-access-token"},
+    )
+
+
+def test_kakao_social_callback_maps_kakao_profile(monkeypatch, tmp_path):
+    monkeypatch.setenv("PICO_AUTH_KAKAO_CLIENT_ID", "kakao-client")
+    monkeypatch.setenv("PICO_AUTH_KAKAO_CLIENT_SECRET", "kakao-secret")
+
+    class FakeResponse:
+        def __init__(self, payload):
+            self._payload = payload
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return self._payload
+
+    class FakeClient:
+        def __init__(self, timeout):
+            self.timeout = timeout
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return None
+
+        def post(self, url, data):
+            return FakeResponse({"access_token": "kakao-access-token"})
+
+        def get(self, url, headers):
+            return FakeResponse(
+                {
+                    "id": 12345,
+                    "properties": {"nickname": "Kakao User"},
+                    "kakao_account": {"email": "kakao-user@example.com"},
+                }
+            )
+
+    monkeypatch.setattr(backend_auth, "httpx", type("FakeHttpx", (), {"Client": FakeClient}), raising=False)
+    client = TestClient(make_app(tmp_path))
+    client.cookies.set("saferoom_oauth_state_kakao", "expected-state")
+
+    response = client.get(
+        "/api/auth/social/kakao/callback?code=oauth-code&state=expected-state",
+        follow_redirects=False,
+    )
+    me_response = client.get("/api/auth/me")
+
+    assert response.status_code == 307
+    assert me_response.json()["user"] == {
+        "user_id": 1,
+        "email": "kakao-user@example.com",
+        "display_name": "Kakao User",
+        "provider": "kakao",
+    }
+
+
+def test_apple_social_callback_maps_id_token_profile(monkeypatch, tmp_path):
+    monkeypatch.setenv("PICO_AUTH_APPLE_CLIENT_ID", "apple-client")
+    monkeypatch.setenv("PICO_AUTH_APPLE_CLIENT_SECRET", "apple-secret")
+    payload = {"sub": "apple-subject-1", "email": "apple-user@example.com"}
+    payload_json = json.dumps(payload).encode()
+    id_token_payload = base64.urlsafe_b64encode(payload_json).decode().rstrip("=")
+    id_token = f"header.{id_token_payload}.signature"
+
+    class FakeResponse:
+        def __init__(self, payload):
+            self._payload = payload
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return self._payload
+
+    class FakeClient:
+        def __init__(self, timeout):
+            self.timeout = timeout
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return None
+
+        def post(self, url, data):
+            return FakeResponse({"id_token": id_token})
+
+        def get(self, url, headers):
+            raise AssertionError("Apple callback should read profile from id_token")
+
+    monkeypatch.setattr(backend_auth, "httpx", type("FakeHttpx", (), {"Client": FakeClient}), raising=False)
+    client = TestClient(make_app(tmp_path))
+    client.cookies.set("saferoom_oauth_state_apple", "expected-state")
+
+    response = client.get(
+        "/api/auth/social/apple/callback?code=oauth-code&state=expected-state",
+        follow_redirects=False,
+    )
+    me_response = client.get("/api/auth/me")
+
+    assert response.status_code == 307
+    assert me_response.json()["user"] == {
+        "user_id": 1,
+        "email": "apple-user@example.com",
+        "display_name": "apple-user",
+        "provider": "apple",
+    }
