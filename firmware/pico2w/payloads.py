@@ -1,3 +1,17 @@
+def timestamp_from_localtime(local_time):
+    year, month, day, hour, minute, second, _, _ = local_time
+    if year < 2024:
+        return None
+    return "{:04d}-{:02d}-{:02d}T{:02d}:{:02d}:{:02d}+00:00".format(
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        second,
+    )
+
+
 def reading_topic(zone_id, device_id, sensor_id):
     return "saferoom/{}/{}/sensors/{}/reading".format(zone_id, device_id, sensor_id)
 

@@ -63,3 +63,19 @@ def test_payload_helpers_do_not_import_simulator():
     import firmware.pico2w.payloads as payloads
 
     assert "simulator" not in payloads.__dict__
+
+
+def test_timestamp_from_localtime_formats_synced_clock():
+    import firmware.pico2w.payloads as payloads
+
+    timestamp = payloads.timestamp_from_localtime((2026, 6, 2, 10, 0, 5, 0, 0))
+
+    assert timestamp == "2026-06-02T10:00:05+00:00"
+
+
+def test_timestamp_from_localtime_returns_none_for_unsynced_pico_clock():
+    import firmware.pico2w.payloads as payloads
+
+    timestamp = payloads.timestamp_from_localtime((2021, 1, 1, 0, 0, 32, 0, 0))
+
+    assert timestamp is None
