@@ -415,6 +415,19 @@ def test_configured_social_provider_start_redirects(monkeypatch, tmp_path):
     assert "saferoom_oauth_state_google" in response.headers["set-cookie"]
 
 
+def test_kakao_social_provider_does_not_request_account_email(monkeypatch, tmp_path):
+    monkeypatch.setenv("PICO_AUTH_KAKAO_CLIENT_ID", "kakao-client")
+    monkeypatch.setenv("PICO_AUTH_KAKAO_CLIENT_SECRET", "kakao-secret")
+    client = TestClient(make_app(tmp_path))
+
+    response = client.get("/api/auth/social/kakao/start", follow_redirects=False)
+
+    assert response.status_code == 307
+    assert "kauth.kakao.com" in response.headers["location"]
+    assert "scope=profile_nickname" in response.headers["location"]
+    assert "account_email" not in response.headers["location"]
+
+
 def test_social_callback_rejects_state_mismatch(monkeypatch, tmp_path):
     monkeypatch.setenv("PICO_AUTH_GOOGLE_CLIENT_ID", "google-client")
     monkeypatch.setenv("PICO_AUTH_GOOGLE_CLIENT_SECRET", "google-secret")
@@ -545,6 +558,55 @@ def test_kakao_social_callback_maps_kakao_profile(monkeypatch, tmp_path):
     assert me_response.json()["user"] == {
         "user_id": 1,
         "email": "kakao-user@example.com",
+        "display_name": "Kakao User",
+        "provider": "kakao",
+    }
+
+
+def test_kakao_social_callback_uses_placeholder_email_without_account_email(monkeypatch, tmp_path):
+    monkeypatch.setenv("PICO_AUTH_KAKAO_CLIENT_ID", "kakao-client")
+    monkeypatch.setenv("PICO_AUTH_KAKAO_CLIENT_SECRET", "kakao-secret")
+
+    class FakeResponse:
+        def __init__(self, payload):
+            self._payload = payload
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return self._payload
+
+    class FakeClient:
+        def __init__(self, timeout):
+            self.timeout = timeout
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return None
+
+        def post(self, url, data):
+            return FakeResponse({"access_token": "kakao-access-token"})
+
+        def get(self, url, headers):
+            return FakeResponse({"id": 12345, "properties": {"nickname": "Kakao User"}})
+
+    monkeypatch.setattr(backend_auth, "httpx", type("FakeHttpx", (), {"Client": FakeClient}), raising=False)
+    client = TestClient(make_app(tmp_path))
+    client.cookies.set("saferoom_oauth_state_kakao", "expected-state")
+
+    response = client.get(
+        "/api/auth/social/kakao/callback?code=oauth-code&state=expected-state",
+        follow_redirects=False,
+    )
+    me_response = client.get("/api/auth/me")
+
+    assert response.status_code == 307
+    assert me_response.json()["user"] == {
+        "user_id": 1,
+        "email": "kakao-12345@kakao.local",
         "display_name": "Kakao User",
         "provider": "kakao",
     }

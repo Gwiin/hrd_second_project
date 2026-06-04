@@ -100,7 +100,7 @@ OAUTH_PROVIDERS = {
         authorize_url="https://kauth.kakao.com/oauth/authorize",
         token_url="https://kauth.kakao.com/oauth/token",
         userinfo_url="https://kapi.kakao.com/v2/user/me",
-        scope="profile_nickname account_email",
+        scope="profile_nickname",
     ),
 }
 
@@ -156,12 +156,13 @@ def _google_profile(provider: OAuthProvider, payload: dict) -> OAuthProfile:
 
 
 def _kakao_profile(provider: OAuthProvider, payload: dict) -> OAuthProfile:
+    subject = str(payload["id"])
     account = payload.get("kakao_account", {})
-    email = normalize_email(account["email"])
+    email = normalize_email(account.get("email") or f"kakao-{subject}@kakao.local")
     properties = payload.get("properties", {})
     return OAuthProfile(
         provider=provider.provider,
-        subject=str(payload["id"]),
+        subject=subject,
         email=email,
         display_name=properties.get("nickname") or display_name_from_email(email),
     )
