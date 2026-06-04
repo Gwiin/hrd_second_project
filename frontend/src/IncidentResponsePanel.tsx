@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import type { IncidentCopy, StatusLabelKey } from './language';
 
 type IncidentAlert = {
   readonly alert_id: number | null;
@@ -44,28 +45,32 @@ type AlertReplay = {
 
 type IncidentResponsePanelProps = {
   readonly alerts: readonly IncidentAlert[];
+  readonly copy: IncidentCopy;
   readonly fallbackZone: string;
   readonly formatTime: (value: string | null) => string;
+  readonly statusLabels: Record<StatusLabelKey, string>;
   readonly statusTone: (status: string) => string;
 };
 
-const fallbackGuidance: Guidance = {
-  summary: 'No incident selected',
-  recommended_action: 'Select a replayable alert to view response guidance.',
-  checklist: []
-};
+type IncidentMessageKey = 'replayUnavailable' | 'saveFailed' | 'saved';
+
+function formatIncidentStatusLabel(status: string, labels: Record<StatusLabelKey, string>): string {
+  return labels[status as StatusLabelKey] ?? status;
+}
 
 export function IncidentResponsePanel({
   alerts,
+  copy,
   fallbackZone,
   formatTime,
+  statusLabels,
   statusTone
 }: IncidentResponsePanelProps) {
   const replayableAlerts = alerts.filter((alert) => alert.alert_id !== null);
   const [selectedAlertId, setSelectedAlertId] = useState<number | null>(null);
   const [replay, setReplay] = useState<AlertReplay | null>(null);
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState('');
+  const [messageKey, setMessageKey] = useState<IncidentMessageKey | null>(null);
 
   useEffect(() => {
     if (selectedAlertId !== null) return;
@@ -73,16 +78,20 @@ export function IncidentResponsePanel({
   }, [replayableAlerts, selectedAlertId]);
 
   const selectedAlert = alerts.find((alert) => alert.alert_id === selectedAlertId) ?? alerts[0] ?? null;
-  const guidance = replay?.guidance ?? fallbackGuidance;
+  const guidance = replay?.guidance ?? {
+    summary: copy.fallbackSummary,
+    recommended_action: copy.fallbackAction,
+    checklist: []
+  };
   const response = replay?.response ?? null;
 
   async function loadReplay(alertId: number) {
     setBusy(true);
-    setMessage('');
+    setMessageKey(null);
     const replayResponse = await fetch(`/api/alerts/${alertId}/replay`);
     setBusy(false);
     if (!replayResponse.ok) {
-      setMessage('Incident replay unavailable.');
+      setMessageKey('replayUnavailable');
       return;
     }
     const nextReplay: AlertReplay = await replayResponse.json();
@@ -112,19 +121,19 @@ export function IncidentResponsePanel({
     setBusy(false);
 
     if (!responseResult.ok) {
-      setMessage('Could not save response evidence.');
+      setMessageKey('saveFailed');
       return;
     }
 
     await loadReplay(alertId);
-    setMessage('Incident response saved.');
+    setMessageKey('saved');
   }
 
   return (
     <section className="panel alerts incident-response-panel">
       <div className="incident-header">
         <div>
-          <h2>Incident response</h2>
+          <h2>{copy.title}</h2>
           <span>{selectedAlert?.zone_id ?? fallbackZone}</span>
         </div>
         <button
@@ -134,11 +143,11 @@ export function IncidentResponsePanel({
             if (selectedAlertId !== null) void loadReplay(selectedAlertId);
           }}
         >
-          Replay incident
+          {copy.replay}
         </button>
       </div>
 
-      {(alerts.length ? alerts : [{ alert_id: null, level: 'info', code: 'none', message: 'No active alert', zone_id: fallbackZone, status: 'open' }]).slice(0, 5).map((alert) => {
+      {(alerts.length ? alerts : [{ alert_id: null, level: 'info', code: 'none', message: copy.noActiveAlert, zone_id: fallbackZone, status: 'open' }]).slice(0, 5).map((alert) => {
         const alertId = alert.alert_id;
         const replayable = alertId !== null;
         return (
@@ -157,9 +166,9 @@ export function IncidentResponsePanel({
             <i className={statusTone(alert.level)} />
             <span>
               <strong>{alert.message}</strong>
-              <small>{replayable ? alert.status : 'not replayable'}</small>
+              <small>{replayable ? formatIncidentStatusLabel(alert.status, statusLabels) : copy.notReplayable}</small>
             </span>
-            <em className={statusTone(alert.level)}>{alert.level}</em>
+            <em className={statusTone(alert.level)}>{formatIncidentStatusLabel(alert.level, statusLabels)}</em>
           </button>
         );
       })}
@@ -176,22 +185,22 @@ export function IncidentResponsePanel({
 
       <form className="incident-form" onSubmit={handleResponseSubmit}>
         <label>
-          <span>Response note</span>
+          <span>{copy.responseNote}</span>
           <textarea name="response-note" maxLength={500} defaultValue={response?.note ?? ''} />
         </label>
         <label>
-          <span>Evidence</span>
+          <span>{copy.evidence}</span>
           <textarea name="response-evidence" maxLength={500} defaultValue={response?.evidence ?? ''} />
         </label>
         <button type="submit" disabled={selectedAlertId === null || busy}>
-          {busy ? 'Saving...' : 'Acknowledge with evidence'}
+          {busy ? copy.saving : copy.acknowledge}
         </button>
-        {message && <small>{message}</small>}
+        {messageKey && <small>{copy[messageKey]}</small>}
       </form>
 
       {replay && (
         <div className="incident-replay">
-          <strong>Replay timeline</strong>
+          <strong>{copy.replayTimeline}</strong>
           {replay.related_events.slice(0, 4).map((entry) => (
             <div className="incident-event" key={entry.id}>
               <time>{formatTime(entry.timestamp)}</time>
