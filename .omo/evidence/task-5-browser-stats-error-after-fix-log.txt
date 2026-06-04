@@ -1,0 +1,6 @@
+statistics error visible; nav height 50
+dashboard still visible:Latest readings
+dashboard still visible:Blackbox timeline
+dashboard still visible:Incident response
+dashboard still visible:Liveness
+dashboard still visible:System log

@@ -63,6 +63,10 @@ def create_app(
     def health() -> dict:
         return get_store().health()
 
+    @app.get("/api/stats")
+    def stats() -> dict:
+        return get_store().stats()
+
     @app.get("/favicon.ico")
     def favicon() -> Response:
         return Response(

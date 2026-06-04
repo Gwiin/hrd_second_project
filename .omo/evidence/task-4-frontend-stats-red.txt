@@ -1,0 +1,34 @@
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+__________________ test_dashboard_fetches_statistics_endpoint __________________
+
+    def test_dashboard_fetches_statistics_endpoint():
+        app = APP_TSX.read_text()
+    
+>       assert "fetch('/api/stats')" in app
+E       assert "fetch('/api/stats')" in "import { useEffect, useState, type FormEvent } from 'react';\nimport { IncidentResponsePanel } from './IncidentRespon...nt : copy.auth.signIn}\n            </button>\n          </form>\n        </section>\n      )}\n    </main>\n  );\n}\n"
+
+tests/test_frontend_auth_gate.py:75: AssertionError
+_______ test_dashboard_has_statistics_navigation_and_llm_context_preview _______
+
+    def test_dashboard_has_statistics_navigation_and_llm_context_preview():
+        app = frontend_source()
+    
+>       assert "activeView" in app
+E       assert 'activeView' in "import { useEffect, useState, type FormEvent } from 'react';\nimport { IncidentResponsePanel } from './IncidentRespon...와 함께 확인',\n      saving: '저장 중...',\n      replayTimeline: '재생 타임라인'\n    } satisfies IncidentCopy\n  }\n} as const;\n"
+
+tests/test_frontend_auth_gate.py:81: AssertionError
+__________________ test_dashboard_has_korean_statistics_copy ___________________
+
+    def test_dashboard_has_korean_statistics_copy():
+        app = frontend_source()
+    
+>       assert "통계" in app
+E       assert '통계' in "import { useEffect, useState, type FormEvent } from 'react';\nimport { IncidentResponsePanel } from './IncidentRespon...와 함께 확인',\n      saving: '저장 중...',\n      replayTimeline: '재생 타임라인'\n    } satisfies IncidentCopy\n  }\n} as const;\n"
+
+tests/test_frontend_auth_gate.py:92: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_frontend_auth_gate.py::test_dashboard_fetches_statistics_endpoint
+FAILED tests/test_frontend_auth_gate.py::test_dashboard_has_statistics_navigation_and_llm_context_preview
+FAILED tests/test_frontend_auth_gate.py::test_dashboard_has_korean_statistics_copy
+3 failed, 13 deselected in 0.04s

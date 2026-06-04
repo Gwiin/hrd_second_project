@@ -56,6 +56,17 @@ class ReadingStore:
             "processes": self._repository.process_statuses(),
         }
 
+    def stats(self) -> dict[str, Any]:
+        stats = self._repository.stats()
+        stats["summary"]["safety_state"] = self._safety_state()
+        stats["llm_context"]["headline"] = (
+            f"{stats['summary']['safety_state'].title()} state with "
+            f"{stats['summary']['total_readings']} readings and "
+            f"{stats['summary']['offline_devices']} offline devices."
+        )
+        stats["llm_context"]["bullets"][0] = f"Safety state: {stats['summary']['safety_state']}"
+        return stats
+
     def devices(self) -> dict[str, Any]:
         return self._repository.devices()
 

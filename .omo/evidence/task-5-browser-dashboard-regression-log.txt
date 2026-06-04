@@ -1,0 +1,5 @@
+visible:Latest readings
+visible:Blackbox timeline
+visible:Incident response
+visible:Liveness
+visible:System log

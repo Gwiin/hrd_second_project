@@ -56,6 +56,8 @@ export const copyByLanguage = {
       signedInAs: 'Signed in as',
       authProvider: 'Provider',
       signOut: 'Sign out',
+      views: 'Views',
+      dashboard: 'Dashboard',
       motion: 'Motion',
       noMotion: 'No Motion'
     },
@@ -118,7 +120,33 @@ export const copyByLanguage = {
       acknowledge: 'Acknowledge with evidence',
       saving: 'Saving...',
       replayTimeline: 'Replay timeline'
-    } satisfies IncidentCopy
+    } satisfies IncidentCopy,
+    stats: {
+      title: 'Statistics',
+      description: 'Operational statistics from the data already visible on the dashboard.',
+      safetyState: 'Safety state',
+      devicesOnline: 'Devices online',
+      totalReadings: 'Total readings',
+      openAlerts: 'Open alerts',
+      staleSensors: 'Stale sensors',
+      sensorBreakdown: 'Sensor breakdown',
+      deviceBreakdown: 'Device breakdown',
+      alertBreakdown: 'Alert breakdown',
+      totalAlerts: 'Total alerts',
+      offlineDevices: 'Offline devices',
+      latestSensors: 'Latest sensors',
+      count: 'Count',
+      latest: 'Latest',
+      average: 'Average',
+      motionTrue: 'Motion true',
+      emptySensors: 'No sensor readings yet.',
+      loading: 'Loading statistics',
+      loadingBody: 'Waiting for the backend statistics summary.',
+      errorTitle: 'Statistics unavailable',
+      errorBody: 'The dashboard is still usable while statistics reconnect.',
+      llmContext: 'Future LLM-ready summary',
+      llmContextPreview: 'LLM context preview'
+    }
   },
   ko: {
     app: {
@@ -148,6 +176,8 @@ export const copyByLanguage = {
       signedInAs: '로그인 사용자',
       authProvider: '인증 방식',
       signOut: '로그아웃',
+      views: '보기',
+      dashboard: '대시보드',
       motion: '움직임',
       noMotion: '움직임 없음'
     },
@@ -210,6 +240,32 @@ export const copyByLanguage = {
       acknowledge: '증거와 함께 확인',
       saving: '저장 중...',
       replayTimeline: '재생 타임라인'
-    } satisfies IncidentCopy
+    } satisfies IncidentCopy,
+    stats: {
+      title: '통계',
+      description: '대시보드에 보이는 데이터를 기준으로 만든 운영 통계입니다.',
+      safetyState: '안전 상태',
+      devicesOnline: '온라인 장치',
+      totalReadings: '총 센서값',
+      openAlerts: '열린 alert',
+      staleSensors: '오래된 센서',
+      sensorBreakdown: '센서별 통계',
+      deviceBreakdown: '장치별 통계',
+      alertBreakdown: 'Alert 통계',
+      totalAlerts: '전체 alert',
+      offlineDevices: '오프라인 장치',
+      latestSensors: '최근 센서 수',
+      count: '개수',
+      latest: '최근값',
+      average: '평균',
+      motionTrue: '움직임 감지',
+      emptySensors: '아직 센서값이 없습니다.',
+      loading: '통계 불러오는 중',
+      loadingBody: 'Backend 통계 요약을 기다리는 중입니다.',
+      errorTitle: '통계를 사용할 수 없습니다',
+      errorBody: '통계가 재연결되는 동안 대시보드는 계속 사용할 수 있습니다.',
+      llmContext: '향후 LLM용 요약',
+      llmContextPreview: 'LLM 분석 컨텍스트'
+    }
   }
 } as const;

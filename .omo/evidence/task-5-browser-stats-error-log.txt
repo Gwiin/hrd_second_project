@@ -1,0 +1,7 @@
+signed up with /api/stats forced to 503
+statistics error state visible
+dashboard still visible:Latest readings
+dashboard still visible:Blackbox timeline
+dashboard still visible:Incident response
+dashboard still visible:Liveness
+dashboard still visible:System log

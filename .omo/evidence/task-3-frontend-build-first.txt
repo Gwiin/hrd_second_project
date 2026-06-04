@@ -1,0 +1,4 @@
+
+> build
+> tsc && vite build --configLoader runner
+

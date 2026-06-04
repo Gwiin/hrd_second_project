@@ -69,6 +69,31 @@ def test_dashboard_uses_incident_replay_and_ack_endpoints():
     assert "fetch(`/api/alerts/${alertId}/ack`" in app
 
 
+def test_dashboard_fetches_statistics_endpoint():
+    app = APP_TSX.read_text()
+
+    assert "fetch('/api/stats')" in app
+
+
+def test_dashboard_has_statistics_navigation_and_llm_context_preview():
+    app = frontend_source()
+
+    assert "activeView" in app
+    assert "setActiveView('statistics')" in app
+    assert "Statistics" in app
+    assert "LLM context preview" in app
+    assert "/api/chat" not in app
+    assert "chat input" not in app.lower()
+
+
+def test_dashboard_has_korean_statistics_copy():
+    app = frontend_source()
+
+    assert "통계" in app
+    assert "LLM 분석 컨텍스트" in app
+    assert "총 센서값" in app
+
+
 def test_dashboard_has_english_korean_language_toggle():
     app = frontend_source()
 

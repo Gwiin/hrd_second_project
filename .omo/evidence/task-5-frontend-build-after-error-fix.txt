@@ -1,0 +1,13 @@
+
+> build
+> tsc && vite build --configLoader runner
+
+vite v7.3.3 building client environment for production...
+transforming...
+✓ 31 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.40 kB │ gzip:  0.27 kB
+dist/assets/index-DlKEusxR.css   19.55 kB │ gzip:  4.62 kB
+dist/assets/index-KxSNc730.js   219.76 kB │ gzip: 68.52 kB
+✓ built in 439ms

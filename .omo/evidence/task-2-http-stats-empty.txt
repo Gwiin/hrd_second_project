@@ -1,0 +1,7 @@
+HTTP/1.1 200 OK
+date: Thu, 04 Jun 2026 16:18:19 GMT
+server: uvicorn
+content-length: 1298
+content-type: application/json
+
+{"generated_at":"2026-06-04T16:18:19.838262+00:00","time_window":{"kind":"all_time","label":"All persisted readings"},"summary":{"safety_state":"safe","last_update":null,"total_devices":4,"online_devices":0,"offline_devices":4,"total_readings":0,"total_alerts":0,"open_alerts":0,"critical_alerts":0,"warning_alerts":0,"stale_sensor_count":0},"device_breakdown":[{"device_id":"pico-safe-001","zone_id":"room-1","status":"offline","latest_sensor_count":0,"stale_sensor_count":0,"alert_count":0},{"device_id":"pico-safe-002","zone_id":"room-2","status":"offline","latest_sensor_count":0,"stale_sensor_count":0,"alert_count":0},{"device_id":"pico-safe-003","zone_id":"room-3","status":"offline","latest_sensor_count":0,"stale_sensor_count":0,"alert_count":0},{"device_id":"pico-safe-004","zone_id":"room-4","status":"offline","latest_sensor_count":0,"stale_sensor_count":0,"alert_count":0}],"sensor_breakdown":[],"alert_breakdown":{"by_level":{"critical":0,"warning":0,"info":0},"by_status":{"open":0,"acknowledged":0}},"timeline_breakdown":{"reading_events":0,"alert_events":0,"log_events":0,"device_heartbeat_events":0,"process_heartbeat_events":0},"llm_context":{"headline":"Safe state with 0 readings and 4 offline devices.","bullets":["Safety state: safe","Devices online: 0/4","Open alerts: 0"]}}

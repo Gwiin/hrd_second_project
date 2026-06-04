@@ -90,6 +90,7 @@ type RealtimeMessage = {
   reading: Reading;
 };
 
+type ActiveView = 'dashboard' | 'statistics';
 type AuthMode = 'signin' | 'signup';
 type AuthProvider = 'google' | 'kakao';
 type AuthErrorKey = 'signupError' | 'signinError';
@@ -108,6 +109,74 @@ type SessionResponse = {
 
 type AuthResponse = {
   user: User;
+};
+
+type StatsSummary = {
+  readonly safety_state: string;
+  readonly last_update: string | null;
+  readonly total_devices: number;
+  readonly online_devices: number;
+  readonly offline_devices: number;
+  readonly total_readings: number;
+  readonly total_alerts: number;
+  readonly open_alerts: number;
+  readonly critical_alerts: number;
+  readonly warning_alerts: number;
+  readonly stale_sensor_count: number;
+};
+
+type DeviceStat = {
+  readonly device_id: string;
+  readonly zone_id: string;
+  readonly status: string;
+  readonly latest_sensor_count: number;
+  readonly stale_sensor_count: number;
+  readonly alert_count: number;
+};
+
+type SensorStat = {
+  readonly sensor_id: string;
+  readonly unit: string;
+  readonly count: number;
+  readonly latest_value: number | boolean;
+  readonly latest_device_id: string;
+  readonly latest_quality: string;
+  readonly quality_counts: Record<string, number>;
+  readonly min?: number;
+  readonly max?: number;
+  readonly average?: number;
+  readonly true_count?: number;
+  readonly false_count?: number;
+};
+
+type AlertBreakdown = {
+  readonly by_level: Record<string, number>;
+  readonly by_status: Record<string, number>;
+};
+
+type TimelineBreakdown = {
+  readonly reading_events: number;
+  readonly alert_events: number;
+  readonly log_events: number;
+  readonly device_heartbeat_events: number;
+  readonly process_heartbeat_events: number;
+};
+
+type StatsResponse = {
+  readonly generated_at: string;
+  readonly time_window: {
+    readonly kind: string;
+    readonly label: string;
+  };
+  readonly summary: StatsSummary;
+  readonly device_breakdown: readonly DeviceStat[];
+  readonly sensor_breakdown: readonly SensorStat[];
+  readonly alert_breakdown: AlertBreakdown;
+  readonly timeline_breakdown: TimelineBreakdown;
+  readonly llm_context: {
+    readonly headline: string;
+    readonly bullets: readonly string[];
+  };
 };
 
 const fallbackDevices: Device[] = [
@@ -192,8 +261,14 @@ function formatQualityLabel(quality: string, labels: Record<QualityLabelKey, str
   return labels[quality as QualityLabelKey] ?? quality;
 }
 
+function formatStatValue(value: number | boolean): string {
+  if (typeof value === 'boolean') return value ? 'true' : 'false';
+  return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+}
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [activeView, setActiveView] = useState<ActiveView>('dashboard');
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
   const [authErrorKey, setAuthErrorKey] = useState<AuthErrorKey | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
@@ -208,6 +283,8 @@ export default function App() {
   const [timeline, setTimeline] = useState<TimelineEntry[]>([]);
   const [liveness, setLiveness] = useState<Liveness>(fallbackLiveness);
   const [realtimeState, setRealtimeState] = useState<RealtimeState>('reconnecting');
+  const [stats, setStats] = useState<StatsResponse | null>(null);
+  const [statsError, setStatsError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -240,7 +317,8 @@ export default function App() {
         logsResponse,
         alertsResponse,
         timelineResponse,
-        livenessResponse
+        livenessResponse,
+        statsResponse
       ] = await Promise.all([
         fetch('/api/health'),
         fetch('/api/devices'),
@@ -248,7 +326,8 @@ export default function App() {
         fetch('/api/logs'),
         fetch('/api/alerts'),
         fetch('/api/timeline?limit=12'),
-        fetch('/api/liveness')
+        fetch('/api/liveness'),
+        fetch('/api/stats')
       ]);
       if (cancelled) return;
       setHealth(await healthResponse.json());
@@ -258,6 +337,12 @@ export default function App() {
       setAlerts((await alertsResponse.json()).alerts);
       setTimeline((await timelineResponse.json()).events);
       setLiveness(await livenessResponse.json());
+      if (statsResponse.ok) {
+        setStats(await statsResponse.json());
+        setStatsError(false);
+      } else {
+        setStatsError(true);
+      }
     }
 
     refresh().catch(() => undefined);
@@ -406,6 +491,124 @@ export default function App() {
     );
   }
 
+  function renderStatisticsView() {
+    if (statsError) {
+      return (
+        <section className="statistics-view">
+          <section className="panel stats-empty">
+            <h2>{copy.stats.errorTitle}</h2>
+            <p>{copy.stats.errorBody}</p>
+          </section>
+        </section>
+      );
+    }
+
+    if (!stats) {
+      return (
+        <section className="statistics-view">
+          <section className="panel stats-empty">
+            <h2>{copy.stats.loading}</h2>
+            <p>{copy.stats.loadingBody}</p>
+          </section>
+        </section>
+      );
+    }
+
+    const summaryCards = [
+      { label: copy.stats.safetyState, value: formatStatusLabel(stats.summary.safety_state, copy.statusLabels) },
+      { label: copy.stats.devicesOnline, value: `${stats.summary.online_devices}/${stats.summary.total_devices}` },
+      { label: copy.stats.totalReadings, value: stats.summary.total_readings.toString() },
+      { label: copy.stats.openAlerts, value: stats.summary.open_alerts.toString() },
+      { label: copy.stats.staleSensors, value: stats.summary.stale_sensor_count.toString() }
+    ];
+
+    return (
+      <section className="statistics-view">
+        <section className="panel stats-hero">
+          <div>
+            <span>{stats.time_window.label}</span>
+            <h2>{copy.stats.title}</h2>
+            <p>{copy.stats.description}</p>
+          </div>
+          <strong>{formatTime(stats.generated_at)}</strong>
+        </section>
+
+        <section className="stats-grid">
+          {summaryCards.map((card) => (
+            <article className="panel stat-card" key={card.label}>
+              <span>{card.label}</span>
+              <strong>{card.value}</strong>
+            </article>
+          ))}
+        </section>
+
+        <section className="panel stats-panel">
+          <div className="panel-title">
+            <h2>{copy.stats.sensorBreakdown}</h2>
+            <span>{copy.stats.totalReadings}: {stats.summary.total_readings}</span>
+          </div>
+          {stats.sensor_breakdown.length ? (
+            <div className="stats-table">
+              {stats.sensor_breakdown.map((sensor) => (
+                <article className="stats-row" key={sensor.sensor_id}>
+                  <strong>{copy.sensors[sensor.sensor_id as keyof typeof copy.sensors] ?? sensor.sensor_id}</strong>
+                  <span>{copy.stats.count}: {sensor.count}</span>
+                  <span>{copy.stats.latest}: {formatStatValue(sensor.latest_value)} {sensor.unit}</span>
+                  {'average' in sensor && <span>{copy.stats.average}: {formatStatValue(sensor.average ?? 0)} {sensor.unit}</span>}
+                  {'true_count' in sensor && <span>{copy.stats.motionTrue}: {sensor.true_count}</span>}
+                  <em>{formatQualityLabel(sensor.latest_quality, copy.qualityLabels)}</em>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="stats-muted">{copy.stats.emptySensors}</p>
+          )}
+        </section>
+
+        <section className="stats-columns">
+          <section className="panel stats-panel">
+            <div className="panel-title">
+              <h2>{copy.stats.deviceBreakdown}</h2>
+              <span>{copy.stats.offlineDevices}: {stats.summary.offline_devices}</span>
+            </div>
+            {stats.device_breakdown.map((device) => (
+              <div className="stats-device" key={device.device_id}>
+                <i className={statusTone(device.status)} />
+                <strong>{device.device_id}</strong>
+                <span>{formatStatusLabel(device.status, copy.statusLabels)}</span>
+                <em>{copy.stats.latestSensors}: {device.latest_sensor_count}</em>
+              </div>
+            ))}
+          </section>
+
+          <section className="panel stats-panel">
+            <div className="panel-title">
+              <h2>{copy.stats.alertBreakdown}</h2>
+              <span>{copy.stats.totalAlerts}: {stats.summary.total_alerts}</span>
+            </div>
+            <div className="alert-stats">
+              <span>{copy.statusLabels.critical}: {stats.alert_breakdown.by_level.critical ?? 0}</span>
+              <span>{copy.statusLabels.warning}: {stats.alert_breakdown.by_level.warning ?? 0}</span>
+              <span>{copy.statusLabels.info}: {stats.alert_breakdown.by_level.info ?? 0}</span>
+              <span>{copy.statusLabels.open}: {stats.alert_breakdown.by_status.open ?? 0}</span>
+            </div>
+          </section>
+        </section>
+
+        <section className="panel llm-context">
+          <span>{copy.stats.llmContext}</span>
+          <h2>{copy.stats.llmContextPreview}</h2>
+          <p>{stats.llm_context.headline}</p>
+          <ul>
+            {stats.llm_context.bullets.map((bullet) => (
+              <li key={bullet}>{bullet}</li>
+            ))}
+          </ul>
+        </section>
+      </section>
+    );
+  }
+
   return (
     <main className="app-shell">
       <div className={isAuthenticated ? 'dashboard-shell' : 'dashboard-shell auth-locked'} aria-hidden={!isAuthenticated}>
@@ -455,118 +658,131 @@ export default function App() {
           </div>
         </header>
 
-        <section className="workspace">
-          <aside className="sidebar">
-            <h2>{copy.app.zones}</h2>
-            <div className="zone-list">
-              {devices.map((device) => (
-                <button
-                  className={device.device_id === selectedDeviceId ? 'zone active' : 'zone'}
-                  key={device.device_id}
-                  onClick={() => setSelectedDeviceId(device.device_id)}
-                >
-                  <span>{device.zone_id.replace('-', ' ')}</span>
-                  <small>{device.device_id}</small>
-                  <i className={statusTone(device.status)} />
-                </button>
-              ))}
-            </div>
-            <h2>{copy.app.devices}</h2>
-            <div className="device-card">
-              <strong>{selectedDevice?.device_id}</strong>
-              <span>{selectedDevice?.model}</span>
-            </div>
-          </aside>
+        <nav className="view-tabs" aria-label={copy.app.views}>
+          <button className={activeView === 'dashboard' ? 'active' : ''} type="button" onClick={() => setActiveView('dashboard')}>
+            {copy.app.dashboard}
+          </button>
+          <button className={activeView === 'statistics' ? 'active' : ''} type="button" onClick={() => setActiveView('statistics')}>
+            {copy.stats.title}
+          </button>
+        </nav>
 
-          <section className="dashboard">
-            <section className="panel">
-              <div className="panel-title">
-                <h2>{copy.app.latestReadings}</h2>
-                <span>{selectedDevice?.zone_id} / {selectedDevice?.device_id}</span>
-              </div>
-              <div className="reading-grid">
-                {sensorIds.map((sensorId, index) => {
-                  const reading = selectedReadings[sensorId];
-                  const quality = sensorQuality(reading);
-                  const tone = qualityTone(quality);
-                  return (
-                    <article className={`reading-card ${tone}`} key={sensorId}>
-                      <span className="sensor-name">{copy.sensors[sensorId]}</span>
-                      <strong>{formatReading(reading, sensorId, copy.app.motion, copy.app.noMotion)}</strong>
-                      <small className={`quality-badge ${tone}`}>{formatQualityLabel(quality, copy.qualityLabels)}</small>
-                      <svg viewBox="0 0 170 44" aria-hidden="true">
-                        <path d={sparkline(index + selectedDeviceId.length)} />
-                      </svg>
-                    </article>
-                  );
-                })}
-              </div>
-            </section>
-
-            <section className="panel timeline-panel">
-              <div className="panel-title">
-                <h2>{copy.app.blackboxTimeline}</h2>
-                <span>{realtimeState === 'live' ? copy.app.liveFlow : copy.app.restPolling}</span>
-              </div>
-              <div className="blackbox-list">
-                {timelineRows.slice(0, 9).map((entry) => (
-                  <article className={`blackbox-event ${statusTone(entry.tone)}`} key={entry.id}>
-                    <time>{formatTime(entry.timestamp)}</time>
-                    <i />
-                    <div>
-                      <strong>{entry.title}</strong>
-                      <span>{entry.message}</span>
-                    </div>
-                    <em>{entry.type.replace('_', ' ')}</em>
-                  </article>
-                ))}
-              </div>
-            </section>
-          </section>
-
-          <aside className="right-rail">
-            <IncidentResponsePanel
-              alerts={alerts}
-              copy={copy.incident}
-              fallbackZone={selectedDevice?.zone_id ?? 'room-1'}
-              formatTime={formatTime}
-              statusLabels={copy.statusLabels}
-              statusTone={statusTone}
-            />
-            <section className="panel liveness-panel">
-              <h2>{copy.app.liveness}</h2>
-              <div className="liveness-group">
-                <span>{copy.app.devices}</span>
-                {livenessDevices.map((device) => (
-                  <div className="liveness-row" key={device.device_id}>
-                    <i className={statusTone(device.status)} />
-                    <strong>{device.device_id}</strong>
-                    <em>{formatStatusLabel(device.status, copy.statusLabels)}</em>
-                  </div>
-                ))}
-              </div>
-              <div className="liveness-group">
-                <span>{copy.app.processes}</span>
-                {livenessProcesses.map((process) => (
-                  <div className="liveness-row" key={process.process}>
-                    <i className={statusTone(process.status)} />
-                    <strong>{process.process}</strong>
-                    <em>{formatStatusLabel(process.status, copy.statusLabels)}</em>
-                  </div>
-                ))}
-              </div>
-            </section>
-            <section className="panel logs">
-              <h2>{copy.app.systemLog}</h2>
-              {(logs.length ? logs : [{ timestamp: new Date().toISOString(), level: 'info', message: copy.app.waitingForCollector }]).slice(0, 6).map((log, index) => (
-                <div className="log-row" key={`${log.timestamp}-${index}`}>
-                  <span>{formatTime(log.timestamp)}</span>
-                  <i />
-                  <p>{log.message}</p>
+        <section className={activeView === 'statistics' ? 'workspace statistics-workspace' : 'workspace'}>
+          {activeView === 'dashboard' ? (
+            <>
+              <aside className="sidebar">
+                <h2>{copy.app.zones}</h2>
+                <div className="zone-list">
+                  {devices.map((device) => (
+                    <button
+                      className={device.device_id === selectedDeviceId ? 'zone active' : 'zone'}
+                      key={device.device_id}
+                      onClick={() => setSelectedDeviceId(device.device_id)}
+                    >
+                      <span>{device.zone_id.replace('-', ' ')}</span>
+                      <small>{device.device_id}</small>
+                      <i className={statusTone(device.status)} />
+                    </button>
+                  ))}
                 </div>
-              ))}
-            </section>
-          </aside>
+                <h2>{copy.app.devices}</h2>
+                <div className="device-card">
+                  <strong>{selectedDevice?.device_id}</strong>
+                  <span>{selectedDevice?.model}</span>
+                </div>
+              </aside>
+
+              <section className="dashboard">
+                <section className="panel">
+                  <div className="panel-title">
+                    <h2>{copy.app.latestReadings}</h2>
+                    <span>{selectedDevice?.zone_id} / {selectedDevice?.device_id}</span>
+                  </div>
+                  <div className="reading-grid">
+                    {sensorIds.map((sensorId, index) => {
+                      const reading = selectedReadings[sensorId];
+                      const quality = sensorQuality(reading);
+                      const tone = qualityTone(quality);
+                      return (
+                        <article className={`reading-card ${tone}`} key={sensorId}>
+                          <span className="sensor-name">{copy.sensors[sensorId]}</span>
+                          <strong>{formatReading(reading, sensorId, copy.app.motion, copy.app.noMotion)}</strong>
+                          <small className={`quality-badge ${tone}`}>{formatQualityLabel(quality, copy.qualityLabels)}</small>
+                          <svg viewBox="0 0 170 44" aria-hidden="true">
+                            <path d={sparkline(index + selectedDeviceId.length)} />
+                          </svg>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section className="panel timeline-panel">
+                  <div className="panel-title">
+                    <h2>{copy.app.blackboxTimeline}</h2>
+                    <span>{realtimeState === 'live' ? copy.app.liveFlow : copy.app.restPolling}</span>
+                  </div>
+                  <div className="blackbox-list">
+                    {timelineRows.slice(0, 9).map((entry) => (
+                      <article className={`blackbox-event ${statusTone(entry.tone)}`} key={entry.id}>
+                        <time>{formatTime(entry.timestamp)}</time>
+                        <i />
+                        <div>
+                          <strong>{entry.title}</strong>
+                          <span>{entry.message}</span>
+                        </div>
+                        <em>{entry.type.replace('_', ' ')}</em>
+                      </article>
+                    ))}
+                  </div>
+                </section>
+              </section>
+
+              <aside className="right-rail">
+                <IncidentResponsePanel
+                  alerts={alerts}
+                  copy={copy.incident}
+                  fallbackZone={selectedDevice?.zone_id ?? 'room-1'}
+                  formatTime={formatTime}
+                  statusLabels={copy.statusLabels}
+                  statusTone={statusTone}
+                />
+                <section className="panel liveness-panel">
+                  <h2>{copy.app.liveness}</h2>
+                  <div className="liveness-group">
+                    <span>{copy.app.devices}</span>
+                    {livenessDevices.map((device) => (
+                      <div className="liveness-row" key={device.device_id}>
+                        <i className={statusTone(device.status)} />
+                        <strong>{device.device_id}</strong>
+                        <em>{formatStatusLabel(device.status, copy.statusLabels)}</em>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="liveness-group">
+                    <span>{copy.app.processes}</span>
+                    {livenessProcesses.map((process) => (
+                      <div className="liveness-row" key={process.process}>
+                        <i className={statusTone(process.status)} />
+                        <strong>{process.process}</strong>
+                        <em>{formatStatusLabel(process.status, copy.statusLabels)}</em>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+                <section className="panel logs">
+                  <h2>{copy.app.systemLog}</h2>
+                  {(logs.length ? logs : [{ timestamp: new Date().toISOString(), level: 'info', message: copy.app.waitingForCollector }]).slice(0, 6).map((log, index) => (
+                    <div className="log-row" key={`${log.timestamp}-${index}`}>
+                      <span>{formatTime(log.timestamp)}</span>
+                      <i />
+                      <p>{log.message}</p>
+                    </div>
+                  ))}
+                </section>
+              </aside>
+            </>
+          ) : renderStatisticsView()}
         </section>
 
         <footer className="footer">

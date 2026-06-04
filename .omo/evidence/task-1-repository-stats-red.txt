@@ -1,0 +1,65 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+____________ test_repository_stats_returns_empty_dashboard_summary _____________
+
+tmp_path = PosixPath('/private/var/folders/0v/q4ljk8nd3n5br9x2j6mx83r80000gn/T/pytest-of-jeong-gwiin/pytest-2/test_repository_stats_returns_0')
+
+    def test_repository_stats_returns_empty_dashboard_summary(tmp_path):
+        repo = SQLiteRepository(tmp_path / "saferoom.db")
+    
+>       stats = repo.stats()
+                ^^^^^^^^^^
+E       AttributeError: 'SQLiteRepository' object has no attribute 'stats'
+
+tests/test_sqlite_repository.py:150: AttributeError
+___________ test_repository_stats_aggregates_visible_dashboard_data ____________
+
+tmp_path = PosixPath('/private/var/folders/0v/q4ljk8nd3n5br9x2j6mx83r80000gn/T/pytest-of-jeong-gwiin/pytest-2/test_repository_stats_aggregat0')
+
+    def test_repository_stats_aggregates_visible_dashboard_data(tmp_path):
+        repo = SQLiteRepository(tmp_path / "saferoom.db")
+    
+        repo.add_event(
+            make_event(
+                event_id="stats-temp-1",
+                sensor_id="temperature",
+                value=21.0,
+                timestamp=datetime(2026, 6, 4, 9, 0, tzinfo=timezone.utc),
+            )
+        )
+        repo.add_event(
+            make_event(
+                event_id="stats-temp-2",
+                sensor_id="temperature",
+                value=24.0,
+                timestamp=datetime(2026, 6, 4, 9, 1, tzinfo=timezone.utc),
+            )
+        )
+        repo.add_event(
+            make_event(
+                event_id="stats-gas-critical",
+                sensor_id="gas",
+                value=601.0,
+                unit="ppm",
+                timestamp=datetime(2026, 6, 4, 9, 2, tzinfo=timezone.utc),
+            )
+        )
+        repo.add_event(
+            make_event(
+                event_id="stats-motion",
+                sensor_id="motion",
+                value=True,
+                unit="boolean",
+                timestamp=datetime(2026, 6, 4, 9, 3, tzinfo=timezone.utc),
+            )
+        )
+    
+>       stats = repo.stats()
+                ^^^^^^^^^^
+E       AttributeError: 'SQLiteRepository' object has no attribute 'stats'
+
+tests/test_sqlite_repository.py:207: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_sqlite_repository.py::test_repository_stats_returns_empty_dashboard_summary
+FAILED tests/test_sqlite_repository.py::test_repository_stats_aggregates_visible_dashboard_data
+2 failed, 8 deselected in 0.10s

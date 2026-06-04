@@ -1,0 +1,15 @@
+HTTP/1.1 201 Created
+date: Thu, 04 Jun 2026 16:18:29 GMT
+server: uvicorn
+content-length: 43
+content-type: application/json
+
+{"accepted":true,"event_id":"qa-stats-gas"}
+---STATS---
+HTTP/1.1 200 OK
+date: Thu, 04 Jun 2026 16:18:29 GMT
+server: uvicorn
+content-length: 1530
+content-type: application/json
+
+{"generated_at":"2026-06-04T16:18:29.625931+00:00","time_window":{"kind":"all_time","label":"All persisted readings"},"summary":{"safety_state":"critical","last_update":"2026-06-04T16:18:29.614956+00:00","total_devices":4,"online_devices":0,"offline_devices":4,"total_readings":1,"total_alerts":2,"open_alerts":2,"critical_alerts":1,"warning_alerts":0,"stale_sensor_count":1},"device_breakdown":[{"device_id":"pico-safe-001","zone_id":"room-1","status":"offline","latest_sensor_count":1,"stale_sensor_count":1,"alert_count":2},{"device_id":"pico-safe-002","zone_id":"room-2","status":"offline","latest_sensor_count":0,"stale_sensor_count":0,"alert_count":0},{"device_id":"pico-safe-003","zone_id":"room-3","status":"offline","latest_sensor_count":0,"stale_sensor_count":0,"alert_count":0},{"device_id":"pico-safe-004","zone_id":"room-4","status":"offline","latest_sensor_count":0,"stale_sensor_count":0,"alert_count":0}],"sensor_breakdown":[{"sensor_id":"gas","unit":"ppm","count":1,"latest_value":601.0,"latest_device_id":"pico-safe-001","latest_quality":"good","quality_counts":{"good":1},"min":601.0,"max":601.0,"average":601.0}],"alert_breakdown":{"by_level":{"critical":1,"warning":0,"info":1},"by_status":{"open":2,"acknowledged":0}},"timeline_breakdown":{"reading_events":1,"alert_events":2,"log_events":1,"device_heartbeat_events":0,"process_heartbeat_events":0},"llm_context":{"headline":"Critical state with 1 readings and 4 offline devices.","bullets":["Safety state: critical","Devices online: 0/4","Open alerts: 2"]}}

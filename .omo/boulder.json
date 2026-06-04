@@ -1,0 +1,14 @@
+{
+  "schema_version": 2,
+  "active_work_id": "statistics-page-before-llm",
+  "works": {
+    "statistics-page-before-llm": {
+      "work_id": "statistics-page-before-llm",
+      "active_plan": ".omo/plans/statistics-page-before-llm.md",
+      "plan_name": "statistics-page-before-llm",
+      "session_ids": ["codex:019e934d-6bfd-7ad1-a9bd-d978e65d705e"],
+      "status": "completed",
+      "worktree_path": null
+    }
+  }
+}

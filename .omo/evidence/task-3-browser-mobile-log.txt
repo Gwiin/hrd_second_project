@@ -1,0 +1,7 @@
+overflowing=false viewport=390 scrollWidth=390
+{
+  "viewportWidth": 390,
+  "scrollWidth": 390,
+  "overflowing": false,
+  "statisticsText": "All persisted readingsStatisticsOperational statistics from the data already visible on the dashboard.오전 01:29:03Safety stateCriticalDevices online0/4Total readings2Open alerts3Stale sensors2Sensor breakdownTotal readings: 2gasCount: 1Latest: 601 ppmAverage: 601 ppmGoodTemperatureCount: 1Latest: 24 celsiusAverage: 24 celsiusGoodDevice breakdownOffline devices: 4pico-safe-001OfflineLatest sensors: 2pico-safe-002OfflineLatest sensors: 0pico-safe-003OfflineLatest sensors: 0pico-safe-004OfflineLates"
+}

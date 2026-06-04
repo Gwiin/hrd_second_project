@@ -1,0 +1,9 @@
+{
+  "scrollX": 0,
+  "scrollY": 0,
+  "innerWidth": 390,
+  "rootScrollWidth": 390,
+  "appLeft": 0,
+  "shellLeft": 10,
+  "statsLeft": 10
+}

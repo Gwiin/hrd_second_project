@@ -1,0 +1,31 @@
+HTTP/1.1 200 OK
+date: Thu, 04 Jun 2026 16:32:14 GMT
+server: uvicorn
+content-length: 1729
+content-type: application/json
+
+{"generated_at":"2026-06-04T16:32:14.638630+00:00","time_window":{"kind":"all_time","label":"All persisted readings"},"summary":{"safety_state":"critical","last_update":"2026-06-04T16:24:12.246663+00:00","total_devices":4,"online_devices":0,"offline_devices":4,"total_readings":2,"total_alerts":3,"open_alerts":3,"critical_alerts":1,"warning_alerts":0,"stale_sensor_count":2},"device_breakdown":[{"device_id":"pico-safe-001","zone_id":"room-1","status":"offline","latest_sensor_count":2,"stale_sensor_count":2,"alert_count":3},{"device_id":"pico-safe-002","zone_id":"room-2","status":"offline","latest_sensor_count":0,"stale_sensor_count":0,"alert_count":0},{"device_id":"pico-safe-003","zone_id":"room-3","status":"offline","latest_sensor_count":0,"stale_sensor_count":0,"alert_count":0},{"device_id":"pico-safe-004","zone_id":"room-4","status":"offline","latest_sensor_count":0,"stale_sensor_count":0,"alert_count":0}],"sensor_breakdown":[{"sensor_id":"gas","unit":"ppm","count":1,"latest_value":601.0,"latest_device_id":"pico-safe-001","latest_quality":"good","quality_counts":{"good":1},"min":601.0,"max":601.0,"average":601.0},{"sensor_id":"temperature","unit":"celsius","count":1,"latest_value":24.0,"latest_device_id":"pico-safe-001","latest_quality":"good","quality_counts":{"good":1},"min":24.0,"max":24.0,"average":24.0}],"alert_breakdown":{"by_level":{"critical":1,"warning":0,"info":2},"by_status":{"open":3,"acknowledged":0}},"timeline_breakdown":{"reading_events":2,"alert_events":3,"log_events":2,"device_heartbeat_events":0,"process_heartbeat_events":0},"llm_context":{"headline":"Critical state with 2 readings and 4 offline devices.","bullets":["Safety state: critical","Devices online: 0/4","Open alerts: 3"]}}
+--- health ---
+HTTP/1.1 200 OK
+date: Thu, 04 Jun 2026 16:32:14 GMT
+server: uvicorn
+content-length: 212
+content-type: application/json
+
+{"app":"Pico SafeRoom","status":"running","safety_state":"critical","uptime_seconds":482,"last_update":"2026-06-04T16:24:12.246663+00:00","processes":{"backend":"online","collector":"offline","worker":"offline"}}
+--- latest ---
+HTTP/1.1 200 OK
+date: Thu, 04 Jun 2026 16:32:14 GMT
+server: uvicorn
+content-length: 704
+content-type: application/json
+
+{"readings":{"pico-safe-001":{"gas":{"device_id":"pico-safe-001","event_id":"qa-browser-gas","metadata":{"qa":true},"protocol":"mock","quality":"good","sensor_id":"gas","site_id":"safe-room-lab","timestamp":"2026-06-04T12:02:00+09:00","trace_id":"e6922d08-d05c-466a-986f-c37b9c1f4da9","unit":"ppm","value":601.0,"zone_id":"room-1"},"temperature":{"device_id":"pico-safe-001","event_id":"qa-browser-temp","metadata":{"qa":true},"protocol":"mock","quality":"good","sensor_id":"temperature","site_id":"safe-room-lab","timestamp":"2026-06-04T12:01:00+09:00","trace_id":"531530c0-c0f7-4b0b-9d0c-7c44955afec6","unit":"celsius","value":24.0,"zone_id":"room-1"}}},"updated_at":"2026-06-04T16:24:12.246663+00:00"}
+--- alerts ---
+HTTP/1.1 200 OK
+date: Thu, 04 Jun 2026 16:32:14 GMT
+server: uvicorn
+content-length: 836
+content-type: application/json
+
+{"alerts":[{"alert_id":1,"level":"critical","code":"gas.critical","message":"Critical gas reading from pico-safe-001: 601.0 ppm","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"gas","value":601.0,"status":"open","created_at":"2026-06-04T16:24:12.246663+00:00","resolved_at":null},{"alert_id":null,"level":"info","code":"sensor.stale","message":"Stale gas reading from pico-safe-001","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"gas","value":601.0,"status":"open","created_at":"2026-06-04T12:02:00+09:00","resolved_at":null},{"alert_id":null,"level":"info","code":"sensor.stale","message":"Stale temperature reading from pico-safe-001","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"temperature","value":24.0,"status":"open","created_at":"2026-06-04T12:01:00+09:00","resolved_at":null}],"count":3}

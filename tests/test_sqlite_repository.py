@@ -9,7 +9,8 @@ def make_event(
     event_id: str = "event-1",
     device_id: str = "pico-safe-001",
     sensor_id: str = "temperature",
-    value: float = 23.6,
+    value: float | bool = 23.6,
+    unit: str = "celsius",
     timestamp: datetime | None = None,
 ) -> SensorEvent:
     return SensorEvent(
@@ -20,7 +21,7 @@ def make_event(
         sensor_id=sensor_id,
         protocol="mock",
         value=value,
-        unit="celsius",
+        unit=unit,
         timestamp=timestamp or datetime.now(timezone.utc),
         quality="good",
         metadata={"seq": 7},
@@ -141,3 +142,87 @@ def test_repository_reports_stale_sensor_alert(tmp_path):
     assert stale_alert["level"] == "info"
     assert stale_alert["device_id"] == "pico-safe-001"
     assert stale_alert["sensor_id"] == "temperature"
+
+
+def test_repository_stats_returns_empty_dashboard_summary(tmp_path):
+    repo = SQLiteRepository(tmp_path / "saferoom.db")
+
+    stats = repo.stats()
+
+    assert stats["time_window"] == {"kind": "all_time", "label": "All persisted readings"}
+    assert stats["summary"]["safety_state"] == "safe"
+    assert stats["summary"]["total_devices"] == 4
+    assert stats["summary"]["online_devices"] == 0
+    assert stats["summary"]["offline_devices"] == 4
+    assert stats["summary"]["total_readings"] == 0
+    assert stats["summary"]["total_alerts"] == 0
+    assert stats["summary"]["open_alerts"] == 0
+    assert stats["summary"]["critical_alerts"] == 0
+    assert stats["summary"]["warning_alerts"] == 0
+    assert stats["summary"]["stale_sensor_count"] == 0
+    assert stats["device_breakdown"][0]["device_id"] == "pico-safe-001"
+    assert stats["device_breakdown"][0]["latest_sensor_count"] == 0
+    assert stats["sensor_breakdown"] == []
+    assert len(stats["llm_context"]["bullets"]) == 3
+
+
+def test_repository_stats_aggregates_visible_dashboard_data(tmp_path):
+    repo = SQLiteRepository(tmp_path / "saferoom.db")
+
+    repo.add_event(
+        make_event(
+            event_id="stats-temp-1",
+            sensor_id="temperature",
+            value=21.0,
+            timestamp=datetime(2026, 6, 4, 9, 0, tzinfo=timezone.utc),
+        )
+    )
+    repo.add_event(
+        make_event(
+            event_id="stats-temp-2",
+            sensor_id="temperature",
+            value=24.0,
+            timestamp=datetime(2026, 6, 4, 9, 1, tzinfo=timezone.utc),
+        )
+    )
+    repo.add_event(
+        make_event(
+            event_id="stats-gas-critical",
+            sensor_id="gas",
+            value=601.0,
+            unit="ppm",
+            timestamp=datetime(2026, 6, 4, 9, 2, tzinfo=timezone.utc),
+        )
+    )
+    repo.add_event(
+        make_event(
+            event_id="stats-motion",
+            sensor_id="motion",
+            value=True,
+            unit="boolean",
+            timestamp=datetime(2026, 6, 4, 9, 3, tzinfo=timezone.utc),
+        )
+    )
+
+    stats = repo.stats()
+
+    assert stats["summary"]["safety_state"] == "critical"
+    assert stats["summary"]["total_readings"] == 4
+    assert stats["summary"]["critical_alerts"] == 1
+    assert stats["summary"]["open_alerts"] >= 1
+    assert stats["alert_breakdown"]["by_level"]["critical"] == 1
+    assert stats["device_breakdown"][0]["latest_sensor_count"] == 3
+    assert stats["device_breakdown"][0]["alert_count"] >= 1
+
+    sensors = {sensor["sensor_id"]: sensor for sensor in stats["sensor_breakdown"]}
+    assert sensors["temperature"]["count"] == 2
+    assert sensors["temperature"]["min"] == 21.0
+    assert sensors["temperature"]["max"] == 24.0
+    assert sensors["temperature"]["average"] == 22.5
+    assert sensors["temperature"]["latest_value"] == 24.0
+    assert sensors["gas"]["max"] == 601.0
+    assert sensors["motion"]["count"] == 1
+    assert sensors["motion"]["true_count"] == 1
+    assert sensors["motion"]["false_count"] == 0
+    assert "average" not in sensors["motion"]
+    assert "critical" in stats["llm_context"]["headline"].lower()

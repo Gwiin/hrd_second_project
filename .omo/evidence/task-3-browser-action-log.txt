@@ -1,0 +1,62 @@
+opened app
+signed up and reached dashboard shell
+captured English statistics screenshot
+captured Korean statistics screenshot
+
+visible statistics text sample:
+All persisted readings
+통계
+
+대시보드에 보이는 데이터를 기준으로 만든 운영 통계입니다.
+
+오전 01:28:26
+안전 상태
+위험
+온라인 장치
+0/4
+총 센서값
+2
+열린 alert
+3
+오래된 센서
+2
+센서별 통계
+총 센서값: 2
+gas
+개수: 1
+최근값: 601 ppm
+평균: 601 ppm
+정상
+온도
+개수: 1
+최근값: 24 celsius
+평균: 24 celsius
+정상
+장치별 통계
+오프라인 장치: 4
+pico-safe-001
+오프라인
+최근 센서 수: 2
+pico-safe-002
+오프라인
+최근 센서 수: 0
+pico-safe-003
+오프라인
+최근 센서 수: 0
+pico-safe-004
+오프라인
+최근 센서 수: 0
+Alert 통계
+전체 alert: 3
+위험: 1
+주의: 0
+정보: 2
+열림: 3
+향후 LLM용 요약
+LLM 분석 컨텍스트
+
+Critical state with 2 readings and 4 offline devices.
+
+Safety state: critical
+Devices online: 0/4
+Open alerts: 3

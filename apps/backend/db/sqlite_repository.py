@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -273,6 +274,115 @@ class SQLiteRepository:
             ]
             alerts.extend(_stale_sensor_alerts(conn))
         return {"alerts": alerts, "count": len(alerts)}
+
+    def stats(self) -> dict[str, Any]:
+        generated_at = datetime.now(timezone.utc).isoformat()
+        with self._connect() as conn:
+            devices = [dict(row) for row in conn.execute("SELECT * FROM devices ORDER BY device_id")]
+            for device in devices:
+                device["status"] = _computed_device_status(device["last_seen_at"])
+
+            reading_rows = [
+                dict(row)
+                for row in conn.execute(
+                    """
+                    SELECT reading_id, payload_json, device_id, sensor_id, value, unit, quality, received_at
+                    FROM sensor_readings
+                    ORDER BY reading_id
+                    """
+                )
+            ]
+            persisted_alerts = [
+                dict(row)
+                for row in conn.execute(
+                    """
+                    SELECT alert_id, level, status, device_id
+                    FROM alerts
+                    ORDER BY alert_id
+                    """
+                )
+            ]
+            stale_alerts = _stale_sensor_alerts(conn)
+            log_count = conn.execute("SELECT COUNT(*) AS count FROM system_logs").fetchone()["count"]
+            device_heartbeat_count = conn.execute(
+                "SELECT COUNT(*) AS count FROM devices WHERE last_seen_at IS NOT NULL"
+            ).fetchone()["count"]
+            process_heartbeat_count = conn.execute("SELECT COUNT(*) AS count FROM process_heartbeats").fetchone()["count"]
+
+        latest_readings = self.latest_readings()
+        latest_by_device = latest_readings["readings"]
+        all_alerts = [*persisted_alerts, *stale_alerts]
+        alert_levels = Counter(alert["level"] for alert in all_alerts)
+        alert_statuses = Counter(alert["status"] for alert in all_alerts)
+        stale_by_device = Counter(alert["device_id"] for alert in stale_alerts if alert.get("device_id"))
+        alerts_by_device = Counter(alert["device_id"] for alert in all_alerts if alert.get("device_id"))
+
+        sensor_stats = _sensor_breakdown(reading_rows)
+        total_readings = len(reading_rows)
+        online_devices = sum(1 for device in devices if device["status"] == "online")
+        safety_state = _safety_state_from_latest(latest_by_device)
+        open_alerts = alert_statuses["open"]
+        total_devices = len(devices)
+        offline_devices = total_devices - online_devices
+        headline = (
+            f"{safety_state.title()} state with {total_readings} readings and {offline_devices} offline devices."
+        )
+
+        return {
+            "generated_at": generated_at,
+            "time_window": {"kind": "all_time", "label": "All persisted readings"},
+            "summary": {
+                "safety_state": safety_state,
+                "last_update": latest_readings["updated_at"],
+                "total_devices": total_devices,
+                "online_devices": online_devices,
+                "offline_devices": offline_devices,
+                "total_readings": total_readings,
+                "total_alerts": len(all_alerts),
+                "open_alerts": open_alerts,
+                "critical_alerts": alert_levels["critical"],
+                "warning_alerts": alert_levels["warning"],
+                "stale_sensor_count": len(stale_alerts),
+            },
+            "device_breakdown": [
+                {
+                    "device_id": device["device_id"],
+                    "zone_id": device["zone_id"],
+                    "status": device["status"],
+                    "latest_sensor_count": len(latest_by_device.get(device["device_id"], {})),
+                    "stale_sensor_count": stale_by_device[device["device_id"]],
+                    "alert_count": alerts_by_device[device["device_id"]],
+                }
+                for device in devices
+            ],
+            "sensor_breakdown": sensor_stats,
+            "alert_breakdown": {
+                "by_level": {
+                    "critical": alert_levels["critical"],
+                    "warning": alert_levels["warning"],
+                    "info": alert_levels["info"],
+                },
+                "by_status": {
+                    "open": open_alerts,
+                    "acknowledged": alert_statuses["acknowledged"],
+                },
+            },
+            "timeline_breakdown": {
+                "reading_events": total_readings,
+                "alert_events": len(all_alerts),
+                "log_events": log_count,
+                "device_heartbeat_events": device_heartbeat_count,
+                "process_heartbeat_events": process_heartbeat_count,
+            },
+            "llm_context": {
+                "headline": headline,
+                "bullets": [
+                    f"Safety state: {safety_state}",
+                    f"Devices online: {online_devices}/{total_devices}",
+                    f"Open alerts: {open_alerts}",
+                ],
+            },
+        }
 
     def ack_alert(
         self,
@@ -708,6 +818,55 @@ def _stale_sensor_alerts(conn: sqlite3.Connection) -> list[dict[str, Any]]:
             }
         )
     return alerts
+
+
+def _sensor_breakdown(reading_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows_by_sensor: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for row in reading_rows:
+        rows_by_sensor[row["sensor_id"]].append(row)
+
+    breakdown: list[dict[str, Any]] = []
+    for sensor_id in sorted(rows_by_sensor):
+        rows = rows_by_sensor[sensor_id]
+        latest = rows[-1]
+        latest_payload = json.loads(latest["payload_json"])
+        quality_counts = Counter(row["quality"] for row in rows)
+        sensor_stat: dict[str, Any] = {
+            "sensor_id": sensor_id,
+            "unit": latest["unit"],
+            "count": len(rows),
+            "latest_value": latest_payload["value"],
+            "latest_device_id": latest["device_id"],
+            "latest_quality": latest["quality"],
+            "quality_counts": dict(sorted(quality_counts.items())),
+        }
+        if sensor_id == "motion":
+            values = [bool(json.loads(row["payload_json"])["value"]) for row in rows]
+            true_count = sum(1 for value in values if value)
+            sensor_stat["true_count"] = true_count
+            sensor_stat["false_count"] = len(values) - true_count
+        else:
+            values = [float(row["value"]) for row in rows]
+            sensor_stat["min"] = min(values)
+            sensor_stat["max"] = max(values)
+            sensor_stat["average"] = sum(values) / len(values)
+        breakdown.append(sensor_stat)
+    return breakdown
+
+
+def _safety_state_from_latest(latest_by_device: dict[str, dict[str, dict[str, Any]]]) -> str:
+    for device_readings in latest_by_device.values():
+        gas = device_readings.get("gas")
+        temperature = device_readings.get("temperature")
+        if gas and float(gas["value"]) >= 600:
+            return "critical"
+        if temperature and float(temperature["value"]) >= 60:
+            return "critical"
+        if gas and float(gas["value"]) >= 300:
+            return "warning"
+        if temperature and float(temperature["value"]) >= 45:
+            return "warning"
+    return "safe"
 
 
 def _reading_timeline_events(conn: sqlite3.Connection, limit: int) -> list[dict[str, Any]]:

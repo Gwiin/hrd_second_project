@@ -20,7 +20,8 @@ def make_payload(
     *,
     event_id: str = "test-event-1",
     sensor_id: str = "temperature",
-    value: float = 23.6,
+    value: float | bool = 23.6,
+    unit: str = "celsius",
     timestamp: datetime | None = None,
 ) -> dict:
     return {
@@ -31,7 +32,7 @@ def make_payload(
         "sensor_id": sensor_id,
         "protocol": "mock",
         "value": value,
-        "unit": "celsius",
+        "unit": unit,
         "timestamp": (timestamp or datetime.now(timezone.utc)).isoformat(),
         "quality": "good",
         "metadata": {"seq": 7},
@@ -169,6 +170,76 @@ def test_history_api_returns_persisted_readings(tmp_path):
     assert body["count"] == 1
     assert body["readings"][0]["event_id"] == "event-2"
     assert body["readings"][0]["value"] == 22.0
+
+
+def test_stats_api_returns_empty_dashboard_summary(tmp_path):
+    client = TestClient(make_app(tmp_path))
+
+    response = client.get("/api/stats")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["time_window"] == {"kind": "all_time", "label": "All persisted readings"}
+    assert body["summary"]["safety_state"] == "safe"
+    assert body["summary"]["total_devices"] == 4
+    assert body["summary"]["online_devices"] == 0
+    assert body["summary"]["offline_devices"] == 4
+    assert body["summary"]["total_readings"] == 0
+    assert body["summary"]["total_alerts"] == 0
+    assert body["sensor_breakdown"] == []
+    assert body["llm_context"]["bullets"] == [
+        "Safety state: safe",
+        "Devices online: 0/4",
+        "Open alerts: 0",
+    ]
+
+
+def test_stats_api_aggregates_readings_alerts_liveness_and_llm_context(tmp_path):
+    client = TestClient(make_app(tmp_path))
+    client.post(
+        "/internal/events",
+        json=make_payload(
+            event_id="stats-api-temp-1",
+            sensor_id="temperature",
+            value=21.0,
+            timestamp=datetime(2026, 6, 4, 9, 0, tzinfo=timezone.utc),
+        ),
+    )
+    client.post(
+        "/internal/events",
+        json=make_payload(
+            event_id="stats-api-temp-2",
+            sensor_id="temperature",
+            value=24.0,
+            timestamp=datetime(2026, 6, 4, 9, 1, tzinfo=timezone.utc),
+        ),
+    )
+    client.post(
+        "/internal/events",
+        json=make_payload(
+            event_id="stats-api-gas",
+            sensor_id="gas",
+            value=601,
+            unit="ppm",
+            timestamp=datetime(2026, 6, 4, 9, 2, tzinfo=timezone.utc),
+        ),
+    )
+    client.post("/internal/heartbeats/device", json=make_heartbeat())
+
+    response = client.get("/api/stats")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["summary"]["safety_state"] == "critical"
+    assert body["summary"]["total_readings"] == 3
+    assert body["summary"]["online_devices"] == 1
+    assert body["summary"]["critical_alerts"] == 1
+    assert body["device_breakdown"][0]["status"] == "online"
+    assert body["device_breakdown"][0]["latest_sensor_count"] == 2
+    sensors = {sensor["sensor_id"]: sensor for sensor in body["sensor_breakdown"]}
+    assert sensors["temperature"]["average"] == 22.5
+    assert sensors["gas"]["max"] == 601.0
+    assert "critical" in body["llm_context"]["headline"].lower()
 
 
 def test_importing_backend_main_does_not_create_default_database():
