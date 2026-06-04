@@ -1,0 +1,6 @@
+opened dashboard
+created account and unlocked dashboard
+selected gas critical alert
+replayed incident guidance
+acknowledged with evidence
+cleanup: browser.close()

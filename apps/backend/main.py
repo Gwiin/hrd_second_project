@@ -4,7 +4,7 @@ import secrets
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import Cookie, FastAPI, HTTPException, Query, Request, Response, WebSocket, WebSocketDisconnect, status
+from fastapi import Body, Cookie, FastAPI, HTTPException, Query, Request, Response, WebSocket, WebSocketDisconnect, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -19,6 +19,7 @@ from apps.backend.auth import (
     new_oauth_state,
     social_provider_summaries,
 )
+from apps.backend.incidents import AlertResponsePayload
 from apps.backend.realtime import RealtimeHub
 from apps.backend.store import ReadingStore
 from shared.schemas.device_heartbeat import DeviceHeartbeat
@@ -102,6 +103,10 @@ def create_app(db_path: Path | None = None, log_path: Path | None = None) -> Fas
     def alerts() -> dict:
         return get_store().alerts()
 
+    @app.get("/api/alerts/guidance/{code}")
+    def alert_guidance(code: str) -> dict:
+        return get_store().alert_guidance(code)
+
     @app.get("/api/auth/me")
     def auth_me(saferoom_session: Annotated[str | None, Cookie()] = None) -> dict:
         user = get_store().current_user(saferoom_session)
@@ -173,10 +178,23 @@ def create_app(db_path: Path | None = None, log_path: Path | None = None) -> Fas
         redirect.delete_cookie(f"{OAUTH_STATE_COOKIE_PREFIX}{provider}", path="/")
         return redirect
 
-    @app.post("/api/alerts/{alert_id}/ack")
-    def ack_alert(alert_id: int) -> dict:
+    @app.get("/api/alerts/{alert_id}/replay")
+    def alert_replay(alert_id: int) -> dict:
         try:
-            return get_store().ack_alert(alert_id)
+            return get_store().alert_replay(alert_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="Alert not found") from exc
+
+    @app.post("/api/alerts/{alert_id}/ack")
+    def ack_alert(alert_id: int, payload: AlertResponsePayload | None = Body(default=None)) -> dict:
+        response_payload = payload or AlertResponsePayload()
+        try:
+            return get_store().ack_alert(
+                alert_id,
+                checklist=response_payload.checklist,
+                note=response_payload.note,
+                evidence=response_payload.evidence,
+            )
         except KeyError as exc:
             raise HTTPException(status_code=404, detail="Alert not found") from exc
 

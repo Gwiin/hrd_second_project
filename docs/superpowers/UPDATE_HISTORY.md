@@ -2,7 +2,7 @@
 
 이 문서는 `docs/superpowers` 아래의 spec, plan, asset, 구현 진행 상태를 한곳에 모아 보는 업데이트 기록입니다.
 
-마지막 업데이트: 2026-06-02
+마지막 업데이트: 2026-06-04
 
 ## 현재 상태
 
@@ -13,6 +13,7 @@
 - 완료: 로그인 전 dashboard blur 처리, email auth session/logout, Google/Kakao OAuth entrypoint와 callback exchange 구현.
 - 완료: desktop launcher 기본 실행 경로를 simulator가 아닌 실제 Pico 2W + MQTT collector 모드로 변경.
 - 완료: local browser 실행에서 `/ws/realtime`이 404가 나지 않도록 `websockets` runtime dependency를 추가하고 favicon 404를 제거.
+- 완료: Incident Replay + Guided Response 차별점 구현. Threshold alert별 대응 guidance, 운영자 note/evidence 저장, `/api/alerts/{alert_id}/replay` timeline replay, dashboard incident response panel을 추가.
 - 다음 작업: 실제 OAuth provider credential 등록과 실제 센서 bring-up 후 dashboard calibration/status UI 보강.
 
 ## 최신 디자인 기준
@@ -28,6 +29,28 @@ Apple Liquid Glass dashboard visual은 승인 완료 상태입니다.
   - Remotion은 사용하지 않음.
 
 ## 2026-06-02
+
+### Incident Replay + Guided Response
+
+상태: 구현 완료, local HTTP/dashboard QA 필요
+
+- Pico SafeRoom의 차별점을 단순 dashboard가 아니라 incident response workflow로 정리.
+- `gas.*`, `temperature.*` alert code별 deterministic response guidance를 추가.
+- Alert acknowledge 시 checklist, note, evidence를 함께 저장할 수 있게 확장.
+- `/api/alerts/{alert_id}/replay`가 alert, guidance, response, related timeline events를 반환.
+- Dashboard right rail의 passive alert list를 incident response panel로 교체.
+- Demo command는 `incident-demo-gas`, `/api/alerts/1/replay`, `/api/alerts/1/ack` 흐름으로 문서화.
+
+관련 주요 파일:
+
+- `apps/backend/incidents.py`
+- `apps/backend/main.py`
+- `apps/backend/store.py`
+- `apps/backend/db/sqlite_repository.py`
+- `frontend/src/IncidentResponsePanel.tsx`
+- `frontend/src/App.tsx`
+- `README.md`
+- `README.ko.md`
 
 ### 실제 Pico 2W 센서 펌웨어
 

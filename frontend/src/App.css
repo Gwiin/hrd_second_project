@@ -745,6 +745,135 @@ h1 {
   grid-template-columns: auto 1fr auto;
 }
 
+.incident-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.38);
+}
+
+.incident-header h2 {
+  padding: 0;
+  border-bottom: 0;
+}
+
+.incident-header span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.incident-header button,
+.incident-form button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(63, 126, 232, 0.14);
+  color: #285fb8;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.incident-header button {
+  padding: 0 14px;
+}
+
+.incident-alert {
+  width: 100%;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+
+.incident-alert:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.incident-alert.active {
+  background: rgba(63, 126, 232, 0.08);
+}
+
+.incident-alert small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.incident-guidance,
+.incident-form,
+.incident-replay {
+  display: grid;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.32);
+}
+
+.incident-guidance strong,
+.incident-replay strong {
+  color: #13283d;
+  font-size: 14px;
+}
+
+.incident-guidance p,
+.incident-guidance ul {
+  margin: 0;
+  color: rgba(24, 39, 58, 0.72);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.incident-guidance ul {
+  padding-left: 18px;
+}
+
+.incident-form label {
+  display: grid;
+  gap: 6px;
+}
+
+.incident-form span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.incident-form textarea {
+  min-height: 58px;
+  resize: vertical;
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  border-radius: 14px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.42);
+  color: var(--text);
+  font: inherit;
+}
+
+.incident-event {
+  display: grid;
+  grid-template-columns: 68px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  color: rgba(24, 39, 58, 0.72);
+  font-size: 12px;
+}
+
+.incident-event span {
+  overflow-wrap: anywhere;
+}
+
+.incident-event em {
+  color: #356fcf;
+  font-style: normal;
+  text-transform: capitalize;
+}
+
 .alert-row i {
   width: 15px;
   height: 15px;
