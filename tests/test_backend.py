@@ -80,6 +80,21 @@ def test_favicon_route_prevents_browser_404(tmp_path):
     assert response.headers["content-type"].startswith("image/svg+xml")
 
 
+def test_dashboard_fallback_when_frontend_assets_are_mid_rebuild(tmp_path):
+    frontend_dist = tmp_path / "dist"
+    frontend_dist.mkdir()
+    (frontend_dist / "index.html").write_text("<html></html>", encoding="utf-8")
+
+    client = TestClient(create_app(db_path=tmp_path / "saferoom.db", frontend_dist=frontend_dist))
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert response.json()["message"] == (
+        "Pico SafeRoom backend is running. Build the dashboard with npm --prefix frontend run build."
+    )
+
+
 def test_devices_api_returns_four_pico_2w_devices(tmp_path):
     client = TestClient(make_app(tmp_path))
 

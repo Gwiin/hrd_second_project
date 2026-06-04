@@ -28,11 +28,15 @@ from shared.schemas.process_heartbeat import ProcessHeartbeat
 from shared.schemas.sensor_event import SensorEvent
 
 
-def create_app(db_path: Path | None = None, log_path: Path | None = None) -> FastAPI:
+def create_app(
+    db_path: Path | None = None,
+    log_path: Path | None = None,
+    frontend_dist: Path | None = None,
+) -> FastAPI:
     app = FastAPI(title="Pico SafeRoom", version="0.1.0")
     store: ReadingStore | None = None
     realtime = RealtimeHub()
-    frontend_dist = Path(__file__).resolve().parents[2] / "frontend" / "dist"
+    resolved_frontend_dist = frontend_dist or Path(__file__).resolve().parents[2] / "frontend" / "dist"
 
     def get_store() -> ReadingStore:
         nonlocal store
@@ -224,12 +228,12 @@ def create_app(db_path: Path | None = None, log_path: Path | None = None) -> Fas
         get_store().add_process_heartbeat(heartbeat)
         return {"accepted": True, "process": heartbeat.process}
 
-    if frontend_dist.exists():
-        app.mount("/assets", StaticFiles(directory=frontend_dist / "assets"), name="assets")
+    if (resolved_frontend_dist / "index.html").exists() and (resolved_frontend_dist / "assets").is_dir():
+        app.mount("/assets", StaticFiles(directory=resolved_frontend_dist / "assets"), name="assets")
 
         @app.get("/")
         def dashboard() -> FileResponse:
-            return FileResponse(frontend_dist / "index.html")
+            return FileResponse(resolved_frontend_dist / "index.html")
     else:
 
         @app.get("/")
