@@ -79,19 +79,25 @@ Backend 실행:
 macOS/Linux:
 
 ```bash
-.venv/bin/python -m uvicorn apps.backend.main:app --host 127.0.0.1 --port 8000
+.venv/bin/python -m uvicorn apps.backend.main:app --host 0.0.0.0 --port 8000
 ```
 
 Windows PowerShell:
 
 ```powershell
-.\.venv\Scripts\python.exe -m uvicorn apps.backend.main:app --host 127.0.0.1 --port 8000
+.\.venv\Scripts\python.exe -m uvicorn apps.backend.main:app --host 0.0.0.0 --port 8000
 ```
 
 브라우저에서 열기:
 
 ```text
 http://127.0.0.1:8000
+```
+
+같은 네트워크의 다른 노트북에서 볼 때는 서버 PC의 IPv4 주소로 접속합니다.
+
+```text
+http://<server-pc-ip>:8000
 ```
 
 ## 로그인 설정

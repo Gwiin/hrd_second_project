@@ -67,8 +67,8 @@ def test_health_reports_level1_processes(tmp_path):
     assert body["app"] == "Pico SafeRoom"
     assert body["status"] == "running"
     assert body["processes"]["backend"] == "online"
-    assert body["processes"]["collector"] == "simulated"
-    assert body["processes"]["worker"] == "simulated"
+    assert body["processes"]["collector"] == "offline"
+    assert body["processes"]["worker"] == "offline"
 
 
 def test_favicon_route_prevents_browser_404(tmp_path):
@@ -94,7 +94,23 @@ def test_devices_api_returns_four_pico_2w_devices(tmp_path):
         "pico-safe-004",
     ]
     assert {device["model"] for device in devices} == {"Raspberry Pi Pico 2W"}
-    assert {device["status"] for device in devices} == {"online"}
+    assert {device["status"] for device in devices} == {"offline"}
+
+
+def test_liveness_marks_never_seen_devices_offline(tmp_path):
+    client = TestClient(make_app(tmp_path))
+
+    response = client.get("/api/liveness")
+
+    assert response.status_code == 200
+    devices = response.json()["devices"]
+    assert {device["device_id"] for device in devices} == {
+        "pico-safe-001",
+        "pico-safe-002",
+        "pico-safe-003",
+        "pico-safe-004",
+    }
+    assert {device["status"] for device in devices} == {"offline"}
 
 
 def test_ingest_event_updates_latest_readings(tmp_path):
@@ -147,6 +163,22 @@ def test_importing_backend_main_does_not_create_default_database():
     importlib.reload(backend_main)
 
     assert not default_db_path.exists()
+
+
+def test_backend_server_defaults_to_lan_access(monkeypatch):
+    monkeypatch.delenv("PICO_BACKEND_HOST", raising=False)
+    monkeypatch.delenv("PICO_BACKEND_PORT", raising=False)
+
+    assert backend_main.server_host() == "0.0.0.0"
+    assert backend_main.server_port() == 8000
+
+
+def test_backend_server_bind_can_be_overridden(monkeypatch):
+    monkeypatch.setenv("PICO_BACKEND_HOST", "127.0.0.1")
+    monkeypatch.setenv("PICO_BACKEND_PORT", "9000")
+
+    assert backend_main.server_host() == "127.0.0.1"
+    assert backend_main.server_port() == 9000
 
 
 def test_alerts_api_returns_threshold_alerts(tmp_path):

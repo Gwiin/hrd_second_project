@@ -65,3 +65,15 @@ def test_post_device_heartbeat_sends_status_to_internal_heartbeats(monkeypatch):
     )
 
     assert RecordingClient.requests[0]["url"] == "http://127.0.0.1:8000/internal/heartbeats/device"
+
+
+def test_post_process_heartbeat_sends_collector_status(monkeypatch):
+    RecordingClient.requests = []
+    monkeypatch.setattr(mqtt_client.httpx, "Client", RecordingClient)
+
+    mqtt_client.post_process_heartbeat("http://127.0.0.1:8000")
+
+    request = RecordingClient.requests[0]
+    assert request["url"] == "http://127.0.0.1:8000/internal/heartbeats/process"
+    assert request["json"]["process"] == "collector"
+    assert request["json"]["status"] == "online"

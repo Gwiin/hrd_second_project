@@ -7,9 +7,13 @@ import time
 import urllib.request
 import webbrowser
 from contextlib import suppress
+from pathlib import Path
 
 
 BACKEND_URL = "http://127.0.0.1:8000"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+AMQTT_EXE = Path(sys.executable).with_name("amqtt.exe" if sys.platform == "win32" else "amqtt")
+AMQTT_CONFIG = PROJECT_ROOT / "data" / "amqtt.yml"
 
 
 def wait_for_backend(url: str = BACKEND_URL, timeout_seconds: float = 15.0) -> bool:
@@ -24,9 +28,10 @@ def wait_for_backend(url: str = BACKEND_URL, timeout_seconds: float = 15.0) -> b
 
 def start_processes() -> list[subprocess.Popen]:
     commands = [
+        [str(AMQTT_EXE), "-c", str(AMQTT_CONFIG)],
         [sys.executable, "-m", "apps.backend.main"],
         [sys.executable, "-m", "apps.collector.mqtt_client", "--backend-url", BACKEND_URL],
-        [sys.executable, "-m", "apps.worker.main"],
+        [sys.executable, "-m", "apps.worker.main", "--backend-url", BACKEND_URL],
     ]
     return [subprocess.Popen(command) for command in commands]
 

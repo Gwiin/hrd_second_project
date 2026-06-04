@@ -63,7 +63,7 @@ def test_repository_preserves_level1_device_shape(tmp_path):
         "pico-safe-003",
         "pico-safe-004",
     ]
-    assert {device["status"] for device in devices} == {"online"}
+    assert {device["status"] for device in devices} == {"offline"}
 
 
 def test_repository_creates_alert_for_gas_warning(tmp_path):

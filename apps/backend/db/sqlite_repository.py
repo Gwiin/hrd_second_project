@@ -190,7 +190,7 @@ class SQLiteRepository:
             )
 
     def process_statuses(self) -> dict[str, str]:
-        statuses = {"backend": "online", "collector": "simulated", "worker": "simulated"}
+        statuses = {"backend": "online", "collector": "offline", "worker": "offline"}
         with self._connect() as conn:
             for row in conn.execute("SELECT process, status FROM process_heartbeats"):
                 statuses[row["process"]] = row["status"]
@@ -206,11 +206,11 @@ class SQLiteRepository:
             "collector": {
                 "kind": "process",
                 "process": "collector",
-                "status": "simulated",
+                "status": "offline",
                 "last_seen_at": None,
                 "metadata": {},
             },
-            "worker": {"kind": "process", "process": "worker", "status": "simulated", "last_seen_at": None, "metadata": {}},
+            "worker": {"kind": "process", "process": "worker", "status": "offline", "last_seen_at": None, "metadata": {}},
         }
         with self._connect() as conn:
             for row in conn.execute("SELECT process, status, last_seen_at, metadata_json FROM process_heartbeats"):
@@ -664,7 +664,7 @@ def _alert_for_event(event: SensorEvent, created_at: str) -> dict[str, str] | No
 
 def _computed_device_status(last_seen_at: str | None) -> str:
     if not last_seen_at:
-        return "online"
+        return "offline"
     last_seen = datetime.fromisoformat(last_seen_at)
     if last_seen.tzinfo is None:
         last_seen = last_seen.replace(tzinfo=timezone.utc)

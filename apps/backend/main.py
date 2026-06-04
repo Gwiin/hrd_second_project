@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import secrets
+import os
 from pathlib import Path
 from typing import Annotated
 
@@ -256,7 +257,15 @@ def _set_session_cookie(response: Response, session_token: str) -> None:
 app = create_app()
 
 
+def server_host() -> str:
+    return os.getenv("PICO_BACKEND_HOST", "0.0.0.0")
+
+
+def server_port() -> int:
+    return int(os.getenv("PICO_BACKEND_PORT", "8000"))
+
+
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("apps.backend.main:app", host="127.0.0.1", port=8000, reload=False)
+    uvicorn.run("apps.backend.main:app", host=server_host(), port=server_port(), reload=False)

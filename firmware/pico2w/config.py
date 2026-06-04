@@ -4,8 +4,8 @@ WIFI_PASSWORD = "bindsoft24"
 MQTT_HOST = "163.152.213.111"
 MQTT_PORT = 1883
 
-DEVICE_ID = "pico-safe-001"
-ZONE_ID = "room-1"
+DEVICE_ID = "pico-safe-004"
+ZONE_ID = "room-4"
 
 PUBLISH_INTERVAL_SECONDS = 5
 

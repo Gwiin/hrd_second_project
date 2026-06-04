@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import threading
+import time
+from datetime import datetime, timezone
 
 import httpx
 
@@ -22,6 +25,29 @@ def post_device_heartbeat(backend_url: str, topic: str, payload: bytes) -> None:
         ).raise_for_status()
 
 
+def post_process_heartbeat(backend_url: str) -> None:
+    payload = {
+        "process": "collector",
+        "status": "online",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "metadata": {"mode": "mqtt"},
+    }
+    with httpx.Client(timeout=5) as client:
+        client.post(f"{backend_url}/internal/heartbeats/process", json=payload).raise_for_status()
+
+
+def start_process_heartbeat_loop(backend_url: str, interval_seconds: float = 5.0) -> None:
+    def heartbeat_loop() -> None:
+        while True:
+            try:
+                post_process_heartbeat(backend_url)
+            except httpx.HTTPError as exc:
+                print(f"MQTT collector heartbeat failed: {exc}", flush=True)
+            time.sleep(interval_seconds)
+
+    threading.Thread(target=heartbeat_loop, daemon=True).start()
+
+
 def run(
     *,
     broker_host: str,
@@ -32,6 +58,7 @@ def run(
 ) -> None:
     import paho.mqtt.client as mqtt
 
+    start_process_heartbeat_loop(backend_url)
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
     def on_connect(client: mqtt.Client, userdata: object, flags: object, reason_code: object, properties: object) -> None:

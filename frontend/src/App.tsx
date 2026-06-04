@@ -114,8 +114,8 @@ const fallbackHealth: Health = {
   last_update: null,
   processes: {
     backend: 'connecting',
-    collector: 'simulated',
-    worker: 'simulated'
+    collector: 'offline',
+    worker: 'offline'
   }
 };
 
