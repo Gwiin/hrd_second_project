@@ -3,7 +3,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 APP_TSX = ROOT / "frontend" / "src" / "App.tsx"
+INCIDENT_PANEL_TSX = ROOT / "frontend" / "src" / "IncidentResponsePanel.tsx"
 APP_CSS = ROOT / "frontend" / "src" / "App.css"
+
+
+def frontend_source() -> str:
+    incident_panel = INCIDENT_PANEL_TSX.read_text() if INCIDENT_PANEL_TSX.exists() else ""
+    return APP_TSX.read_text() + "\n" + incident_panel
 
 
 def test_pre_login_dashboard_is_blurred_and_locked():
@@ -42,3 +48,20 @@ def test_authenticated_dashboard_has_logout_action():
     assert "Sign out" in app
     assert "fetch('/api/auth/logout'" in app
     assert "setIsAuthenticated(false)" in app
+
+
+def test_dashboard_has_incident_response_workflow_hooks():
+    app = frontend_source()
+
+    assert "Incident response" in app
+    assert "Replay incident" in app
+    assert "Response note" in app
+    assert "Evidence" in app
+    assert "not replayable" in app
+
+
+def test_dashboard_uses_incident_replay_and_ack_endpoints():
+    app = frontend_source()
+
+    assert "fetch(`/api/alerts/${alertId}/replay`" in app
+    assert "fetch(`/api/alerts/${alertId}/ack`" in app

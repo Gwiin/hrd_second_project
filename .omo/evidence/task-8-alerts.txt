@@ -1,0 +1,7 @@
+HTTP/1.1 200 OK
+date: Thu, 04 Jun 2026 01:02:33 GMT
+server: uvicorn
+content-length: 303
+content-type: application/json
+
+{"alerts":[{"alert_id":1,"level":"critical","code":"gas.critical","message":"Critical gas reading from pico-safe-001: 601.0 ppm","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"gas","value":601.0,"status":"open","created_at":"2026-06-04T01:02:25.015846+00:00","resolved_at":null}],"count":1}

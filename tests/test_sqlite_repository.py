@@ -90,6 +90,46 @@ def test_repository_acknowledges_alert(tmp_path):
     assert updated["alert"]["resolved_at"] is not None
 
 
+def test_incident_response_persists_across_repository_instances(tmp_path):
+    db_path = tmp_path / "saferoom.db"
+    first_repo = SQLiteRepository(db_path)
+    first_repo.add_event(make_event(sensor_id="gas", value=601))
+    alert_id = first_repo.alerts()["alerts"][0]["alert_id"]
+
+    first_repo.ack_alert(
+        alert_id,
+        checklist=["evacuate", "ventilate", "inspect_sensor"],
+        note="Operator opened the window.",
+        evidence="Ventilation confirmed.",
+    )
+    second_repo = SQLiteRepository(db_path)
+
+    replay = second_repo.alert_replay(alert_id)
+
+    assert replay["response"] == {
+        "checklist": ["evacuate", "ventilate", "inspect_sensor"],
+        "note": "Operator opened the window.",
+        "evidence": "Ventilation confirmed.",
+    }
+
+
+def test_incident_response_reack_updates_existing_row(tmp_path):
+    repo = SQLiteRepository(tmp_path / "saferoom.db")
+    repo.add_event(make_event(sensor_id="gas", value=601))
+    alert_id = repo.alerts()["alerts"][0]["alert_id"]
+
+    repo.ack_alert(alert_id, checklist=["evacuate"], note="First note", evidence="First evidence")
+    repo.ack_alert(alert_id, checklist=["ventilate"], note="Updated note", evidence="Updated evidence")
+
+    replay = repo.alert_replay(alert_id)
+
+    assert replay["response"] == {
+        "checklist": ["ventilate"],
+        "note": "Updated note",
+        "evidence": "Updated evidence",
+    }
+
+
 def test_repository_reports_stale_sensor_alert(tmp_path):
     repo = SQLiteRepository(tmp_path / "saferoom.db")
     old_timestamp = datetime(2020, 1, 1, 10, 0, tzinfo=timezone.utc)

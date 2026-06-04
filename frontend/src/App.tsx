@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
+import { IncidentResponsePanel } from './IncidentResponsePanel';
 
 type Device = {
   device_id: string;
@@ -301,20 +302,6 @@ export default function App() {
   const selectedReadings = readings[selectedDevice?.device_id] ?? {};
   const safetyTone = statusTone(health.safety_state);
 
-  const alertRows = useMemo(
-    () => alerts.length
-      ? alerts.slice(0, 5).map((alert) => ({
-        level: alert.level,
-        message: alert.message,
-        room: alert.zone_id ?? 'site',
-        tone: statusTone(alert.level)
-      }))
-      : [
-        { level: 'info', message: 'No active alert', room: selectedDevice?.zone_id ?? 'room-1', tone: 'safe' },
-        { level: 'info', message: 'Four Pico 2W devices registered', room: 'site', tone: 'safe' }
-      ],
-    [alerts, selectedDevice?.zone_id]
-  );
   const timelineRows = timeline.length
     ? timeline
     : [{
@@ -484,19 +471,12 @@ export default function App() {
           </section>
 
           <aside className="right-rail">
-            <section className="panel alerts">
-              <h2>Recent alerts</h2>
-              {alertRows.map((alert) => (
-                <div className="alert-row" key={`${alert.message}-${alert.room}`}>
-                  <i className={alert.tone} />
-                  <div>
-                    <strong>{alert.message}</strong>
-                    <span>{alert.room}</span>
-                  </div>
-                  <em className={alert.tone}>{alert.level}</em>
-                </div>
-              ))}
-            </section>
+            <IncidentResponsePanel
+              alerts={alerts}
+              fallbackZone={selectedDevice?.zone_id ?? 'room-1'}
+              formatTime={formatTime}
+              statusTone={statusTone}
+            />
             <section className="panel liveness-panel">
               <h2>Liveness</h2>
               <div className="liveness-group">

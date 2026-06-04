@@ -31,6 +31,28 @@ Pico 2W 실제 센서
 - Backend: `apps/backend/`
 - Frontend: `frontend/`
 
+## 차별점: Incident Replay + Guided Response
+
+Pico SafeRoom은 센서값을 보여주는 dashboard에서 끝나지 않고, 위험 alert가 발생했을 때 대응 checklist, 운영자 note/evidence, replay 가능한 timeline을 함께 남기는 incident response demo입니다.
+
+로컬 demo는 실제 Pico bring-up 없이도 내부 HTTP event로 확인할 수 있습니다.
+
+```bash
+curl -i -X POST http://127.0.0.1:8000/internal/events \
+  -H 'Content-Type: application/json' \
+  -d '{"event_id":"incident-demo-gas","site_id":"safe-room-lab","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"gas","protocol":"mock","value":601,"unit":"ppm","timestamp":"2026-06-04T12:00:00+09:00","quality":"good","metadata":{"demo":true}}'
+
+curl -i http://127.0.0.1:8000/api/alerts/1/replay
+
+curl -i -X POST http://127.0.0.1:8000/api/alerts/1/ack \
+  -H 'Content-Type: application/json' \
+  -d '{"checklist":["evacuate","ventilate","inspect_sensor"],"note":"Demo operator confirmed gas threshold and opened ventilation.","evidence":"Window opened, sensor cable checked."}'
+
+curl -i http://127.0.0.1:8000/api/alerts/1/replay
+```
+
+실제 4대 Pico 2W 센서 bring-up과 OAuth provider credential 검증은 별도 현장 검증 항목입니다.
+
 ## 펌웨어 언어 결정
 
 현재 프로젝트는 **MicroPython**을 사용합니다.
@@ -68,4 +90,3 @@ npm --prefix frontend run build
 - MQTT parser / heartbeat forwarding
 - Pico firmware helper tests
 - simulator 분리 테스트
-

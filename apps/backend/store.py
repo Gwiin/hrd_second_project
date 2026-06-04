@@ -14,6 +14,7 @@ from apps.backend.auth import (
     session_expires_at,
     verify_password,
 )
+from apps.backend.incidents import guidance_for_code
 from apps.backend.db.sqlite_repository import SQLiteRepository
 from shared.schemas.device_heartbeat import DeviceHeartbeat
 from shared.schemas.process_heartbeat import ProcessHeartbeat
@@ -80,8 +81,21 @@ class ReadingStore:
     def alerts(self) -> dict[str, Any]:
         return self._repository.alerts()
 
-    def ack_alert(self, alert_id: int) -> dict[str, Any]:
-        return self._repository.ack_alert(alert_id)
+    def alert_guidance(self, code: str) -> dict[str, Any]:
+        return {"guidance": guidance_for_code(code)}
+
+    def alert_replay(self, alert_id: int) -> dict[str, Any]:
+        return self._repository.alert_replay(alert_id)
+
+    def ack_alert(
+        self,
+        alert_id: int,
+        *,
+        checklist: list[str] | None = None,
+        note: str = "",
+        evidence: str = "",
+    ) -> dict[str, Any]:
+        return self._repository.ack_alert(alert_id, checklist=checklist, note=note, evidence=evidence)
 
     def signup_with_email(self, email: str, password: str) -> dict[str, Any] | None:
         normalized_email = normalize_email(email)
