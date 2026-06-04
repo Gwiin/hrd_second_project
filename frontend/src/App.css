@@ -161,6 +161,72 @@ button {
   font-weight: 780;
 }
 
+.language-toggle {
+  width: fit-content;
+  display: inline-grid;
+  grid-template-columns: repeat(2, minmax(74px, auto));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.language-toggle button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: rgba(24, 39, 58, 0.68);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.language-toggle button.active {
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 8px 16px rgba(63, 126, 232, 0.1);
+  color: #102033;
+}
+
+.auth-language {
+  margin-bottom: 2px;
+  justify-self: end;
+}
+
+.user-info {
+  min-width: 170px;
+  display: grid;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.48);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.user-info span,
+.user-info em {
+  color: rgba(24, 39, 58, 0.58);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 720;
+}
+
+.user-info strong {
+  color: #102033;
+  font-size: 13px;
+  font-weight: 780;
+}
+
+.user-info small {
+  overflow: hidden;
+  color: rgba(24, 39, 58, 0.7);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .auth-tabs {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { IncidentResponsePanel } from './IncidentResponsePanel';
+import { copyByLanguage, languageOptions, sensorIds, type Language, type QualityLabelKey, type StatusLabelKey } from './language';
 
 type Device = {
   device_id: string;
@@ -91,6 +92,23 @@ type RealtimeMessage = {
 
 type AuthMode = 'signin' | 'signup';
 type AuthProvider = 'google' | 'kakao';
+type AuthErrorKey = 'signupError' | 'signinError';
+
+type User = {
+  user_id: number;
+  email: string;
+  display_name: string;
+  provider: string;
+};
+
+type SessionResponse = {
+  authenticated: boolean;
+  user: User | null;
+};
+
+type AuthResponse = {
+  user: User;
+};
 
 const fallbackDevices: Device[] = [
   { device_id: 'pico-safe-001', zone_id: 'room-1', device_name: 'Pico Safe 001', model: 'Raspberry Pi Pico 2W', status: 'online' },
@@ -98,13 +116,6 @@ const fallbackDevices: Device[] = [
   { device_id: 'pico-safe-003', zone_id: 'room-3', device_name: 'Pico Safe 003', model: 'Raspberry Pi Pico 2W', status: 'online' },
   { device_id: 'pico-safe-004', zone_id: 'room-4', device_name: 'Pico Safe 004', model: 'Raspberry Pi Pico 2W', status: 'online' }
 ];
-
-const sensorLabels: Record<string, string> = {
-  temperature: 'Temperature',
-  humidity: 'Humidity',
-  light: 'Light',
-  motion: 'Motion'
-};
 
 const fallbackHealth: Health = {
   app: 'Pico SafeRoom',
@@ -140,9 +151,9 @@ function formatUptime(seconds: number): string {
   return `${hours}:${minutes}:${secs}`;
 }
 
-function formatReading(reading: Reading | undefined, sensorId: string): string {
+function formatReading(reading: Reading | undefined, sensorId: string, motion: string, noMotion: string): string {
   if (!reading) return '--';
-  if (sensorId === 'motion') return reading.value ? 'Motion' : 'No Motion';
+  if (sensorId === 'motion') return reading.value ? motion : noMotion;
   return `${reading.value} ${reading.unit === 'celsius' ? 'C' : reading.unit}`;
 }
 
@@ -173,11 +184,21 @@ function statusTone(status: string): string {
   return 'safe';
 }
 
+function formatStatusLabel(status: string, labels: Record<StatusLabelKey, string>): string {
+  return labels[status as StatusLabelKey] ?? status;
+}
+
+function formatQualityLabel(quality: string, labels: Record<QualityLabelKey, string>): string {
+  return labels[quality as QualityLabelKey] ?? quality;
+}
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>('signin');
-  const [authError, setAuthError] = useState('');
+  const [authErrorKey, setAuthErrorKey] = useState<AuthErrorKey | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
+  const [language, setLanguage] = useState<Language>('en');
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [devices, setDevices] = useState<Device[]>(fallbackDevices);
   const [selectedDeviceId, setSelectedDeviceId] = useState('pico-safe-001');
   const [health, setHealth] = useState<Health>(fallbackHealth);
@@ -194,8 +215,11 @@ export default function App() {
     async function loadSession() {
       const response = await fetch('/api/auth/me', { credentials: 'include' });
       if (!response.ok || cancelled) return;
-      const session = await response.json();
-      if (!cancelled) setIsAuthenticated(Boolean(session.authenticated));
+      const session: SessionResponse = await response.json();
+      if (!cancelled) {
+        setIsAuthenticated(Boolean(session.authenticated));
+        setCurrentUser(session.user);
+      }
     }
 
     loadSession().catch(() => undefined);
@@ -301,6 +325,7 @@ export default function App() {
   const selectedDevice = devices.find((device) => device.device_id === selectedDeviceId) ?? devices[0];
   const selectedReadings = readings[selectedDevice?.device_id] ?? {};
   const safetyTone = statusTone(health.safety_state);
+  const copy = copyByLanguage[language];
 
   const timelineRows = timeline.length
     ? timeline
@@ -309,7 +334,7 @@ export default function App() {
       type: 'log',
       timestamp: new Date().toISOString(),
       title: 'waiting',
-      message: 'Waiting for MQTT readings',
+      message: copy.app.waitingForMqtt,
       tone: 'warning'
     }];
   const livenessDevices = liveness.devices.length ? liveness.devices : fallbackLiveness.devices;
@@ -318,7 +343,7 @@ export default function App() {
   async function handleAuthSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setAuthBusy(true);
-    setAuthError('');
+    setAuthErrorKey(null);
 
     const form = new FormData(event.currentTarget);
     const payload = {
@@ -342,10 +367,12 @@ export default function App() {
     setAuthBusy(false);
 
     if (!response.ok) {
-      setAuthError(authMode === 'signup' ? 'Could not create that account.' : 'Email or password did not match.');
+      setAuthErrorKey(authMode === 'signup' ? 'signupError' : 'signinError');
       return;
     }
 
+    const authResult: AuthResponse = await response.json();
+    setCurrentUser(authResult.user);
     setIsAuthenticated(true);
   }
 
@@ -359,6 +386,24 @@ export default function App() {
       credentials: 'include'
     }).catch(() => undefined);
     setIsAuthenticated(false);
+    setCurrentUser(null);
+  }
+
+  function renderLanguageToggle(className = '') {
+    return (
+      <div className={`language-toggle ${className}`} aria-label={copy.app.language}>
+        {languageOptions.map((option) => (
+          <button
+            className={language === option.id ? 'active' : ''}
+            key={option.id}
+            type="button"
+            onClick={() => setLanguage(option.id)}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -369,41 +414,50 @@ export default function App() {
             <span className="brand-status" aria-hidden="true" />
             <div>
               <h1>Pico SafeRoom</h1>
-              <span>Four-device Pico 2W safety monitor</span>
+              <span>{copy.app.subtitle}</span>
             </div>
             {isAuthenticated && (
               <button className="sign-out-button" type="button" onClick={handleLogout}>
-                Sign out
+                {copy.app.signOut}
               </button>
             )}
           </div>
+          {isAuthenticated && currentUser && (
+            <div className="user-info">
+              <span>{copy.app.signedInAs}</span>
+              <strong>{currentUser.display_name}</strong>
+              <small>{currentUser.email}</small>
+              <em>{copy.app.authProvider}: {currentUser.provider}</em>
+            </div>
+          )}
+          {renderLanguageToggle()}
           <div className={`safety ${safetyTone}`}>
-            <span>Safety state</span>
-            <strong>{health.safety_state === 'safe' ? 'Safe' : health.safety_state}</strong>
+            <span>{copy.app.safetyState}</span>
+            <strong>{formatStatusLabel(health.safety_state, copy.statusLabels)}</strong>
           </div>
           {Object.entries(health.processes).map(([name, state]) => (
             <div className="process" key={name}>
               <span>{name}</span>
-              <strong><i className={statusTone(state)} />{state}</strong>
+              <strong><i className={statusTone(state)} />{formatStatusLabel(state, copy.statusLabels)}</strong>
             </div>
           ))}
           <div className="timebox">
-            <span>Uptime</span>
+            <span>{copy.app.uptime}</span>
             <strong>{formatUptime(health.uptime_seconds)}</strong>
           </div>
           <div className="timebox">
-            <span>Last update</span>
+            <span>{copy.app.lastUpdate}</span>
             <strong>{formatTime(health.last_update)}</strong>
           </div>
           <div className={`realtime ${realtimeState}`}>
-            <span>Realtime</span>
-            <strong><i />{realtimeState}</strong>
+            <span>{copy.app.realtime}</span>
+            <strong><i />{formatStatusLabel(realtimeState, copy.statusLabels)}</strong>
           </div>
         </header>
 
         <section className="workspace">
           <aside className="sidebar">
-            <h2>Zones</h2>
+            <h2>{copy.app.zones}</h2>
             <div className="zone-list">
               {devices.map((device) => (
                 <button
@@ -417,7 +471,7 @@ export default function App() {
                 </button>
               ))}
             </div>
-            <h2>Devices</h2>
+            <h2>{copy.app.devices}</h2>
             <div className="device-card">
               <strong>{selectedDevice?.device_id}</strong>
               <span>{selectedDevice?.model}</span>
@@ -427,19 +481,19 @@ export default function App() {
           <section className="dashboard">
             <section className="panel">
               <div className="panel-title">
-                <h2>Latest readings</h2>
+                <h2>{copy.app.latestReadings}</h2>
                 <span>{selectedDevice?.zone_id} / {selectedDevice?.device_id}</span>
               </div>
               <div className="reading-grid">
-                {Object.keys(sensorLabels).map((sensorId, index) => {
+                {sensorIds.map((sensorId, index) => {
                   const reading = selectedReadings[sensorId];
                   const quality = sensorQuality(reading);
                   const tone = qualityTone(quality);
                   return (
                     <article className={`reading-card ${tone}`} key={sensorId}>
-                      <span className="sensor-name">{sensorLabels[sensorId]}</span>
-                      <strong>{formatReading(reading, sensorId)}</strong>
-                      <small className={`quality-badge ${tone}`}>{quality}</small>
+                      <span className="sensor-name">{copy.sensors[sensorId]}</span>
+                      <strong>{formatReading(reading, sensorId, copy.app.motion, copy.app.noMotion)}</strong>
+                      <small className={`quality-badge ${tone}`}>{formatQualityLabel(quality, copy.qualityLabels)}</small>
                       <svg viewBox="0 0 170 44" aria-hidden="true">
                         <path d={sparkline(index + selectedDeviceId.length)} />
                       </svg>
@@ -451,8 +505,8 @@ export default function App() {
 
             <section className="panel timeline-panel">
               <div className="panel-title">
-                <h2>Blackbox timeline</h2>
-                <span>{realtimeState === 'live' ? 'live websocket flow' : 'REST polling active'}</span>
+                <h2>{copy.app.blackboxTimeline}</h2>
+                <span>{realtimeState === 'live' ? copy.app.liveFlow : copy.app.restPolling}</span>
               </div>
               <div className="blackbox-list">
                 {timelineRows.slice(0, 9).map((entry) => (
@@ -473,36 +527,38 @@ export default function App() {
           <aside className="right-rail">
             <IncidentResponsePanel
               alerts={alerts}
+              copy={copy.incident}
               fallbackZone={selectedDevice?.zone_id ?? 'room-1'}
               formatTime={formatTime}
+              statusLabels={copy.statusLabels}
               statusTone={statusTone}
             />
             <section className="panel liveness-panel">
-              <h2>Liveness</h2>
+              <h2>{copy.app.liveness}</h2>
               <div className="liveness-group">
-                <span>Devices</span>
+                <span>{copy.app.devices}</span>
                 {livenessDevices.map((device) => (
                   <div className="liveness-row" key={device.device_id}>
                     <i className={statusTone(device.status)} />
                     <strong>{device.device_id}</strong>
-                    <em>{device.status}</em>
+                    <em>{formatStatusLabel(device.status, copy.statusLabels)}</em>
                   </div>
                 ))}
               </div>
               <div className="liveness-group">
-                <span>Processes</span>
+                <span>{copy.app.processes}</span>
                 {livenessProcesses.map((process) => (
                   <div className="liveness-row" key={process.process}>
                     <i className={statusTone(process.status)} />
                     <strong>{process.process}</strong>
-                    <em>{process.status}</em>
+                    <em>{formatStatusLabel(process.status, copy.statusLabels)}</em>
                   </div>
                 ))}
               </div>
             </section>
             <section className="panel logs">
-              <h2>System log</h2>
-              {(logs.length ? logs : [{ timestamp: new Date().toISOString(), level: 'info', message: 'Waiting for collector readings' }]).slice(0, 6).map((log, index) => (
+              <h2>{copy.app.systemLog}</h2>
+              {(logs.length ? logs : [{ timestamp: new Date().toISOString(), level: 'info', message: copy.app.waitingForCollector }]).slice(0, 6).map((log, index) => (
                 <div className="log-row" key={`${log.timestamp}-${index}`}>
                   <span>{formatTime(log.timestamp)}</span>
                   <i />
@@ -514,66 +570,67 @@ export default function App() {
         </section>
 
         <footer className="footer">
-          <span><strong>Last event:</strong> {logs[0]?.message ?? 'waiting for readings'}</span>
-          <span><strong>Runtime:</strong> {formatUptime(health.uptime_seconds)}</span>
-          <span><strong>Data flow:</strong> {realtimeState === 'live' ? 'websocket' : 'REST'}</span>
-          <span><strong>Local time:</strong> {new Date().toLocaleTimeString()}</span>
+          <span><strong>{copy.app.lastEvent}:</strong> {logs[0]?.message ?? copy.app.waitingForReadings}</span>
+          <span><strong>{copy.app.runtime}:</strong> {formatUptime(health.uptime_seconds)}</span>
+          <span><strong>{copy.app.dataFlow}:</strong> {realtimeState === 'live' ? 'websocket' : 'REST'}</span>
+          <span><strong>{copy.app.localTime}:</strong> {new Date().toLocaleTimeString()}</span>
         </footer>
       </div>
 
       {!isAuthenticated && (
         <section className="auth-backdrop" role="dialog" aria-modal="true" aria-labelledby="auth-title">
           <div className="auth-context">
-            <span>Real-board mode</span>
-            <strong>4 Pico 2W devices protected behind login</strong>
-            <p>Local-first safety monitoring with MQTT, heartbeat, alerts, and blackbox timeline.</p>
+            <span>{copy.auth.realBoardMode}</span>
+            <strong>{copy.auth.protectedDevices}</strong>
+            <p>{copy.auth.description}</p>
           </div>
 
           <form className="auth-card" onSubmit={handleAuthSubmit}>
+            {renderLanguageToggle('auth-language')}
             <div className="auth-header">
               <span className="brand-status" aria-hidden="true" />
               <div>
                 <h2 id="auth-title">Pico SafeRoom</h2>
-                <p>Sign in to unlock the dashboard.</p>
+                <p>{copy.auth.subtitle}</p>
               </div>
             </div>
 
-            <div className="auth-tabs" aria-label="Authentication mode">
+            <div className="auth-tabs" aria-label={copy.auth.modeLabel}>
               <button
                 type="button"
                 className={authMode === 'signin' ? 'active' : ''}
                 onClick={() => setAuthMode('signin')}
               >
-                Sign in
+                {copy.auth.signIn}
               </button>
               <button
                 type="button"
                 className={authMode === 'signup' ? 'active' : ''}
                 onClick={() => setAuthMode('signup')}
               >
-                Create account
+                {copy.auth.createAccount}
               </button>
             </div>
 
             <div className="social-auth">
               <button type="button" onClick={() => handleSocialAuth('google')}>
                 <i className="google-dot" aria-hidden="true" />
-                Continue with Google
+                {copy.auth.continueGoogle}
               </button>
               <button type="button" onClick={() => handleSocialAuth('kakao')}>
                 <i className="kakao-dot" aria-hidden="true" />
-                Continue with Kakao
+                {copy.auth.continueKakao}
               </button>
             </div>
 
-            <div className="auth-divider"><span>Email</span></div>
+            <div className="auth-divider"><span>{copy.auth.email}</span></div>
 
             <label>
-              <span>Email</span>
+              <span>{copy.auth.email}</span>
               <input type="email" name="email" autoComplete="email" required />
             </label>
             <label>
-              <span>Password</span>
+              <span>{copy.auth.password}</span>
               <input
                 type="password"
                 name="password"
@@ -581,9 +638,9 @@ export default function App() {
                 required
               />
             </label>
-            {authError && <p className="auth-error">{authError}</p>}
+            {authErrorKey && <p className="auth-error">{copy.auth[authErrorKey]}</p>}
             <button className="auth-submit" type="submit">
-              {authBusy ? 'Checking...' : authMode === 'signup' ? 'Create account' : 'Sign in'}
+              {authBusy ? copy.auth.checking : authMode === 'signup' ? copy.auth.createAccount : copy.auth.signIn}
             </button>
           </form>
         </section>
