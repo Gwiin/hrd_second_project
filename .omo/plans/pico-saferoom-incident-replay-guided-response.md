@@ -14,7 +14,7 @@
 
 ## Context
 ### Original Request
-The user asked: "I want to have 차별점 with other simular projects in this project."
+The user asked: "I want to have 차별점 with other simillar projects in this project."
 
 ### Interview Summary
 No blocking interview was needed after repo exploration. The current project is already a strong local IoT safety monitor, so the plan chooses a buildable differentiator rather than another generic dashboard feature.

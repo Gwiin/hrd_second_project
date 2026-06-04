@@ -1,0 +1,7 @@
+HTTP/1.1 201 Created
+date: Thu, 04 Jun 2026 01:02:24 GMT
+server: uvicorn
+content-length: 48
+content-type: application/json
+
+{"accepted":true,"event_id":"incident-demo-gas"}

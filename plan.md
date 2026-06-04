@@ -25,7 +25,7 @@
 - [x] Dashboard-visible logout action.
 - [x] WebSocket runtime dependency included for Uvicorn browser runs.
 - [x] Favicon route added to avoid browser resource 404 noise.
-- [ ] Differentiation direction selected and translated into either UI, docs, or a buildable feature plan.
+- [x] Differentiation direction selected and translated into Incident Replay + Guided Response UI, API, docs, and buildable feature plan.
 - [ ] Live OAuth provider credentials registered and tested outside mocked callback tests.
 - [ ] Real four-board sensor bring-up verified with MQTT messages from hardware.
 
