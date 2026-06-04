@@ -1,0 +1,1 @@
+cleanup: killed QA server PID 61705; removed /private/tmp/saferoom-incident-qa.db; lsof -i :8011 returned no listener; tmux unavailable and no tmux session was created; browser.close() recorded in task-5-browser-actions.txt

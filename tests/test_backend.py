@@ -179,6 +179,88 @@ def test_ack_alert_api_updates_alert_status(tmp_path):
     assert alert["status"] == "acknowledged"
 
 
+def test_gas_critical_alert_includes_response_guidance(tmp_path):
+    client = TestClient(make_app(tmp_path))
+    client.post("/internal/events", json=make_payload(event_id="gas-guidance", sensor_id="gas", value=601))
+
+    response = client.get("/api/alerts/1/replay")
+
+    assert response.status_code == 200
+    guidance = response.json()["guidance"]
+    assert guidance["summary"] == "Critical gas level detected"
+    assert guidance["recommended_action"] == "Evacuate, ventilate the room, and inspect the gas sensor before re-entry."
+    assert [item["id"] for item in guidance["checklist"]] == ["evacuate", "ventilate", "inspect_sensor"]
+
+
+def test_unknown_alert_code_uses_safe_guidance_fallback(tmp_path):
+    client = TestClient(make_app(tmp_path))
+
+    response = client.get("/api/alerts/guidance/unknown.code")
+
+    assert response.status_code == 200
+    guidance = response.json()["guidance"]
+    assert guidance["summary"] == "Investigate alert"
+    assert [item["id"] for item in guidance["checklist"]] == ["inspect_area", "check_sensor"]
+
+
+def test_ack_alert_api_accepts_response_evidence(tmp_path):
+    client = TestClient(make_app(tmp_path))
+    client.post("/internal/events", json=make_payload(event_id="gas-response", sensor_id="gas", value=601))
+
+    response = client.post(
+        "/api/alerts/1/ack",
+        json={
+            "checklist": ["evacuate", "ventilate"],
+            "note": "Operator opened the window.",
+            "evidence": "Ventilation confirmed.",
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["alert"]["status"] == "acknowledged"
+    assert body["response"] == {
+        "checklist": ["evacuate", "ventilate"],
+        "note": "Operator opened the window.",
+        "evidence": "Ventilation confirmed.",
+    }
+
+
+def test_alert_replay_returns_incident_bundle(tmp_path):
+    client = TestClient(make_app(tmp_path))
+    client.post("/internal/events", json=make_payload(event_id="gas-replay", sensor_id="gas", value=601))
+
+    response = client.get("/api/alerts/1/replay")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["alert"]["code"] == "gas.critical"
+    assert body["guidance"]["summary"] == "Critical gas level detected"
+    assert body["response"] is None
+    assert {event["type"] for event in body["related_events"]} >= {"alert", "reading", "log"}
+
+
+def test_alert_replay_unknown_alert_returns_404(tmp_path):
+    client = TestClient(make_app(tmp_path))
+
+    response = client.get("/api/alerts/999/replay")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Alert not found"
+
+
+def test_ack_alert_rejects_too_long_response_note(tmp_path):
+    client = TestClient(make_app(tmp_path))
+    client.post("/internal/events", json=make_payload(event_id="gas-long-note", sensor_id="gas", value=601))
+
+    response = client.post(
+        "/api/alerts/1/ack",
+        json={"checklist": ["evacuate"], "note": "x" * 501, "evidence": "short"},
+    )
+
+    assert response.status_code == 422
+
+
 def test_realtime_websocket_receives_reading_created(tmp_path):
     client = TestClient(make_app(tmp_path))
 
@@ -610,4 +692,3 @@ def test_kakao_social_callback_uses_placeholder_email_without_account_email(monk
         "display_name": "Kakao User",
         "provider": "kakao",
     }
-

@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from apps.backend.incidents import clean_response_text, guidance_for_code
 from apps.backend.devices import LEVEL1_DEVICES
 from shared.schemas.device_heartbeat import DeviceHeartbeat
 from shared.schemas.process_heartbeat import ProcessHeartbeat
@@ -273,7 +274,14 @@ class SQLiteRepository:
             alerts.extend(_stale_sensor_alerts(conn))
         return {"alerts": alerts, "count": len(alerts)}
 
-    def ack_alert(self, alert_id: int) -> dict[str, Any]:
+    def ack_alert(
+        self,
+        alert_id: int,
+        *,
+        checklist: list[str] | None = None,
+        note: str = "",
+        evidence: str = "",
+    ) -> dict[str, Any]:
         resolved_at = datetime.now(timezone.utc).isoformat()
         with self._connect() as conn:
             conn.execute(
@@ -293,9 +301,63 @@ class SQLiteRepository:
                 """,
                 (alert_id,),
             ).fetchone()
+            if row is not None and (checklist is not None or note or evidence):
+                conn.execute(
+                    """
+                    INSERT INTO incident_responses (
+                        alert_id, checklist_json, note, evidence, created_at, updated_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(alert_id) DO UPDATE SET
+                        checklist_json = excluded.checklist_json,
+                        note = excluded.note,
+                        evidence = excluded.evidence,
+                        updated_at = excluded.updated_at
+                    """,
+                    (
+                        alert_id,
+                        json.dumps(checklist or [], sort_keys=True),
+                        clean_response_text(note),
+                        clean_response_text(evidence),
+                        resolved_at,
+                        resolved_at,
+                    ),
+                )
         if row is None:
             raise KeyError(alert_id)
-        return {"alert": dict(row)}
+        response = self._incident_response(alert_id)
+        result: dict[str, Any] = {"alert": dict(row)}
+        if response is not None:
+            result["response"] = response
+        return result
+
+    def alert_replay(self, alert_id: int) -> dict[str, Any]:
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT alert_id, level, code, message, zone_id, device_id,
+                       sensor_id, value, status, created_at, resolved_at
+                FROM alerts
+                WHERE alert_id = ?
+                """,
+                (alert_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(alert_id)
+            alert = dict(row)
+            events = []
+            events.extend(_reading_timeline_events(conn, 25))
+            events.extend(_alert_timeline_events(conn, 25))
+            events.extend(_log_timeline_events(conn, 25))
+            events.extend(_device_heartbeat_timeline_events(conn))
+            events.extend(_process_heartbeat_timeline_events(conn))
+        events.sort(key=lambda event: event["timestamp"], reverse=True)
+        return {
+            "alert": alert,
+            "guidance": guidance_for_code(alert["code"]),
+            "response": self._incident_response(alert_id),
+            "related_events": events[:25],
+        }
 
     def get_user_by_email(self, email: str) -> dict[str, Any] | None:
         with self._connect() as conn:
@@ -358,6 +420,24 @@ class SQLiteRepository:
     def delete_auth_session(self, session_token: str) -> None:
         with self._connect() as conn:
             conn.execute("DELETE FROM auth_sessions WHERE session_token = ?", (session_token,))
+
+    def _incident_response(self, alert_id: int) -> dict[str, Any] | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT checklist_json, note, evidence
+                FROM incident_responses
+                WHERE alert_id = ?
+                """,
+                (alert_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        return {
+            "checklist": json.loads(row["checklist_json"]),
+            "note": row["note"],
+            "evidence": row["evidence"],
+        }
 
     def get_or_create_social_user(
         self,
@@ -481,6 +561,16 @@ class SQLiteRepository:
                     status TEXT NOT NULL DEFAULT 'open',
                     created_at TEXT NOT NULL,
                     resolved_at TEXT
+                );
+
+                CREATE TABLE IF NOT EXISTS incident_responses (
+                    alert_id INTEGER PRIMARY KEY,
+                    checklist_json TEXT NOT NULL,
+                    note TEXT NOT NULL,
+                    evidence TEXT NOT NULL,
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    FOREIGN KEY (alert_id) REFERENCES alerts(alert_id)
                 );
 
                 CREATE TABLE IF NOT EXISTS process_heartbeats (

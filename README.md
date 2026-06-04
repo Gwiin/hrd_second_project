@@ -2,6 +2,28 @@
 
 팀원이 먼저 읽을 한국어 안내 문서: [README.ko.md](README.ko.md)
 
+## Differentiator
+
+Pico SafeRoom is not only an IoT sensor dashboard. Its Incident Replay + Guided Response flow lets a demo trigger a gas/temperature alert, review deterministic response guidance, save operator note/evidence on acknowledgement, and replay the related safety timeline.
+
+Local HTTP demo:
+
+```bash
+curl -i -X POST http://127.0.0.1:8000/internal/events \
+  -H 'Content-Type: application/json' \
+  -d '{"event_id":"incident-demo-gas","site_id":"safe-room-lab","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"gas","protocol":"mock","value":601,"unit":"ppm","timestamp":"2026-06-04T12:00:00+09:00","quality":"good","metadata":{"demo":true}}'
+
+curl -i http://127.0.0.1:8000/api/alerts/1/replay
+
+curl -i -X POST http://127.0.0.1:8000/api/alerts/1/ack \
+  -H 'Content-Type: application/json' \
+  -d '{"checklist":["evacuate","ventilate","inspect_sensor"],"note":"Demo operator confirmed gas threshold and opened ventilation.","evidence":"Window opened, sensor cable checked."}'
+
+curl -i http://127.0.0.1:8000/api/alerts/1/replay
+```
+
+Real four-board sensor bring-up and live OAuth credential verification remain separate field checks.
+
 |일자|요일|시간|인원|내용|
 |---|---|---|---|---|
 |6/1|월|오전|전체|아이디어 회의|
