@@ -3,9 +3,9 @@
 팀원이 먼저 읽을 한국어 안내 문서: [README.ko.md](README.ko.md)
 
 
-프로젝트 계획서 : [2차_2조_프로젝트_계획서](doc/2차_2조_프로젝트_계획서.hwp)
-프로젝트 기술서 : [2차_2조_프로젝트_기술서.hwp](doc/2차_2조_프로젝트_기술서.hwp)
-프로젝트 기술서 : [2차_2조_프로젝트_기술서.pdf](doc/2차_2조_프로젝트_기술서.pdf)
+프로젝트 계획서 : [2차_2조_프로젝트_계획서](doc/2차_2조_프로젝트_계획서.hwp)<br>
+프로젝트 기술서 : [2차_2조_프로젝트_기술서.hwp](doc/2차_2조_프로젝트_기술서.hwp)<br>
+프로젝트 기술서 : [2차_2조_프로젝트_기술서.pdf](doc/2차_2조_프로젝트_기술서.pdf)<br>
 프로젝트 PPT : [2차_2조_프로젝트_PPT(구글슬라이드)](https://docs.google.com/presentation/d/1MAZA8_BpAbH0k7joSGT2nYlI7PidhcKbyEObbgLLVgU/edit?usp=sharing)
 
 
