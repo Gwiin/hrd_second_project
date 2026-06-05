@@ -46,12 +46,21 @@ Real four-board sensor bring-up and live OAuth credential verification remain se
 ||||박찬웅|social login(google) 추가|
 ||||박시영|pico 2w 센서 테스트|
 ||||||
-|6/4|목|오전|정귀인||
-||||황지용||
-||||박찬웅||
-||||박시영||
-|||오후|정귀인||
-||||황지용||
-||||박찬웅||
-||||박시영||
+|6/4|목|오전|정귀인|incident replay 및 guided response backend 구현|
+||||황지용|pico2w 배선 수정 및 문서|
+||||박찬웅|dashboard incident response UI 구현|
+||||박시영|pico2w 배선 수정 및 문서|
+|||오후|정귀인|alert ack/report API 및 SQLite 저장 검증|
+||||황지용|실제 센서 MQTT publish 테스트|
+||||박찬웅|dashboard timeline 및 WebSocket 상태 표시 보완|
+||||박시영|pico2w 센서값 보정 및 payload 확인|
+||||||
+|6/5|금|오전|정귀인|프로젝트 기술서 및 README 정리|
+||||황지용|pico2w config 정리 및 실제 센서 연결 점검|
+||||박찬웅|frontend 화면 QA 및 social login 설정 확인|
+||||박시영|pico2w 펌웨어 동작 확인 및 배선 문서 보완|
+|||오후|정귀인|backend-frontend-pico 2w 통합 시연 점검|
+||||황지용|4대 Pico 2W 센서 field check|
+||||박찬웅|발표용 dashboard 시나리오 점검|
+||||박시영|4대 Pico 2W 센서 field check|
 ---
