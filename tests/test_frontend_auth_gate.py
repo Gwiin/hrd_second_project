@@ -8,15 +8,19 @@ LANGUAGE_TS = ROOT / "frontend" / "src" / "language.ts"
 APP_CSS = ROOT / "frontend" / "src" / "App.css"
 
 
+def source_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8")
+
+
 def frontend_source() -> str:
-    incident_panel = INCIDENT_PANEL_TSX.read_text() if INCIDENT_PANEL_TSX.exists() else ""
-    language = LANGUAGE_TS.read_text() if LANGUAGE_TS.exists() else ""
-    return APP_TSX.read_text() + "\n" + incident_panel + "\n" + language
+    incident_panel = source_text(INCIDENT_PANEL_TSX) if INCIDENT_PANEL_TSX.exists() else ""
+    language = source_text(LANGUAGE_TS) if LANGUAGE_TS.exists() else ""
+    return source_text(APP_TSX) + "\n" + incident_panel + "\n" + language
 
 
 def test_pre_login_dashboard_is_blurred_and_locked():
-    app = APP_TSX.read_text()
-    css = APP_CSS.read_text()
+    app = source_text(APP_TSX)
+    css = source_text(APP_CSS)
 
     assert "auth-locked" in app
     assert "auth-backdrop" in app
@@ -36,7 +40,7 @@ def test_auth_gate_offers_social_and_email_entry_points():
 
 
 def test_auth_gate_uses_backend_auth_endpoints():
-    app = APP_TSX.read_text()
+    app = source_text(APP_TSX)
 
     assert "fetch('/api/auth/me'" in app
     assert "fetch('/api/auth/signup'" in app
@@ -79,7 +83,7 @@ def test_incident_response_panel_surfaces_command_report():
 
 
 def test_dashboard_fetches_statistics_endpoint():
-    app = APP_TSX.read_text()
+    app = source_text(APP_TSX)
 
     assert "fetch('/api/stats')" in app
 

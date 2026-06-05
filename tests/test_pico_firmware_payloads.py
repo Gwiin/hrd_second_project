@@ -6,6 +6,34 @@ from firmware.pico2w.payloads import (
 )
 
 
+def test_config_example_exists_for_board_specific_copy():
+    from pathlib import Path
+
+    config_example = Path("firmware/pico2w/config.example.py")
+
+    assert config_example.exists()
+    source = config_example.read_text(encoding="utf-8")
+    for setting in (
+        "WIFI_SSID",
+        "WIFI_PASSWORD",
+        "MQTT_HOST",
+        "MQTT_PORT",
+        "DEVICE_ID",
+        "ZONE_ID",
+        "PUBLISH_INTERVAL_SECONDS",
+        "PIN_DHT",
+        "DHT_SENSOR_TYPE",
+        "PIN_MOTION",
+        "PIN_GAS_ADC",
+        "PIN_LIGHT_ADC",
+        "ENABLE_DHT",
+        "ENABLE_MOTION",
+        "ENABLE_GAS",
+        "ENABLE_LIGHT",
+    ):
+        assert setting in source
+
+
 def test_reading_topic_uses_saferoom_contract():
     topic = reading_topic("room-1", "pico-safe-001", "gas")
 
