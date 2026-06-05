@@ -1085,6 +1085,7 @@ h1 {
 }
 
 .incident-guidance,
+.incident-report,
 .incident-form,
 .incident-replay {
   display: grid;
@@ -1094,9 +1095,33 @@ h1 {
 }
 
 .incident-guidance strong,
+.incident-report strong,
 .incident-replay strong {
   color: #13283d;
   font-size: 14px;
+}
+
+.incident-report {
+  background: rgba(63, 126, 232, 0.08);
+}
+
+.incident-report div {
+  display: grid;
+  gap: 6px;
+}
+
+.incident-report span,
+.incident-report small,
+.incident-report em {
+  color: rgba(24, 39, 58, 0.72);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.incident-report em {
+  color: #285fb8;
+  text-transform: capitalize;
 }
 
 .incident-guidance p,

@@ -1,0 +1,7 @@
+2026-06-05T00:24:52.412Z opened dashboard
+2026-06-05T00:24:52.506Z selected signup mode
+2026-06-05T00:24:52.564Z submitted signup
+2026-06-05T00:24:52.690Z clicked replay incident
+2026-06-05T00:24:52.768Z verified incident response and report copy
+2026-06-05T00:24:53.409Z screenshot .omo/ulw-loop/evidence/incident-report-browser.png
+cleanup: browser.close()

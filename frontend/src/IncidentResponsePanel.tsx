@@ -43,6 +43,18 @@ type AlertReplay = {
   readonly related_events: readonly TimelineEntry[];
 };
 
+type IncidentReport = {
+  readonly report_id: string;
+  readonly checklist_status: {
+    readonly total: number;
+    readonly completed: number;
+    readonly missing: readonly ChecklistItem[];
+  };
+  readonly operator_response: IncidentResponse | null;
+  readonly next_action: string;
+  readonly timeline_count: number;
+};
+
 type IncidentResponsePanelProps = {
   readonly alerts: readonly IncidentAlert[];
   readonly copy: IncidentCopy;
@@ -69,6 +81,7 @@ export function IncidentResponsePanel({
   const replayableAlerts = alerts.filter((alert) => alert.alert_id !== null);
   const [selectedAlertId, setSelectedAlertId] = useState<number | null>(null);
   const [replay, setReplay] = useState<AlertReplay | null>(null);
+  const [report, setReport] = useState<IncidentReport | null>(null);
   const [busy, setBusy] = useState(false);
   const [messageKey, setMessageKey] = useState<IncidentMessageKey | null>(null);
 
@@ -92,11 +105,19 @@ export function IncidentResponsePanel({
     setBusy(false);
     if (!replayResponse.ok) {
       setMessageKey('replayUnavailable');
+      setReport(null);
       return;
     }
     const nextReplay: AlertReplay = await replayResponse.json();
     setReplay(nextReplay);
     setSelectedAlertId(alertId);
+    const reportResponse = await fetch(`/api/alerts/${alertId}/report`);
+    if (!reportResponse.ok) {
+      setReport(null);
+      return;
+    }
+    const reportBody: { readonly report: IncidentReport } = await reportResponse.json();
+    setReport(reportBody.report);
   }
 
   async function handleResponseSubmit(event: FormEvent<HTMLFormElement>) {
@@ -182,6 +203,20 @@ export function IncidentResponsePanel({
           ))}
         </ul>
       </div>
+
+      {report && (
+        <div className="incident-report">
+          <strong>{copy.reportTitle}</strong>
+          <div>
+            <span>{report.report_id}</span>
+            <em>{copy.nextAction}: {report.next_action.split('_').join(' ')}</em>
+          </div>
+          <small>
+            {copy.checklistComplete}: {report.checklist_status.completed}/{report.checklist_status.total}
+          </small>
+          <small>{copy.timelineEvents}: {report.timeline_count}</small>
+        </div>
+      )}
 
       <form className="incident-form" onSubmit={handleResponseSubmit}>
         <label>

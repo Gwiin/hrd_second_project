@@ -1,0 +1,8 @@
+C002 HTTP unknown alert edge path
+HTTP/1.1 404 Not Found
+date: Fri, 05 Jun 2026 00:23:37 GMT
+server: uvicorn
+content-length: 28
+content-type: application/json
+
+{"detail":"Alert not found"}

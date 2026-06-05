@@ -469,6 +469,50 @@ class SQLiteRepository:
             "related_events": events[:25],
         }
 
+    def alert_report(self, alert_id: int) -> dict[str, Any]:
+        replay = self.alert_replay(alert_id)
+        alert = replay["alert"]
+        guidance = replay["guidance"]
+        response = replay["response"]
+        checklist_items = guidance["checklist"]
+        checklist_ids = {item["id"] for item in checklist_items}
+        completed = checklist_ids.intersection(response["checklist"]) if response else set()
+        missing = [item for item in checklist_items if item["id"] not in completed]
+        next_action = "monitor_until_clear"
+        if response is None:
+            next_action = "execute_guidance"
+        elif missing:
+            next_action = "complete_response_checklist"
+        return {
+            "report": {
+                "report_id": f"alert-{alert['alert_id']}",
+                "incident": {
+                    "alert_id": alert["alert_id"],
+                    "level": alert["level"],
+                    "code": alert["code"],
+                    "message": alert["message"],
+                    "zone_id": alert["zone_id"],
+                    "device_id": alert["device_id"],
+                    "sensor_id": alert["sensor_id"],
+                    "value": alert["value"],
+                    "status": alert["status"],
+                    "created_at": alert["created_at"],
+                    "resolved_at": alert["resolved_at"],
+                },
+                "guidance_summary": guidance["summary"],
+                "recommended_action": guidance["recommended_action"],
+                "checklist_status": {
+                    "total": len(checklist_items),
+                    "completed": len(completed),
+                    "missing": missing,
+                },
+                "operator_response": response,
+                "next_action": next_action,
+                "timeline_count": len(replay["related_events"]),
+                "related_events": replay["related_events"][:8],
+            }
+        }
+
     def get_user_by_email(self, email: str) -> dict[str, Any] | None:
         with self._connect() as conn:
             row = conn.execute(

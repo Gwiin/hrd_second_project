@@ -18,6 +18,10 @@ export type IncidentCopy = {
   readonly acknowledge: string;
   readonly saving: string;
   readonly replayTimeline: string;
+  readonly reportTitle: string;
+  readonly nextAction: string;
+  readonly checklistComplete: string;
+  readonly timelineEvents: string;
 };
 
 export const languageOptions: readonly { readonly id: Language; readonly label: string }[] = [
@@ -119,7 +123,11 @@ export const copyByLanguage = {
       evidence: 'Evidence',
       acknowledge: 'Acknowledge with evidence',
       saving: 'Saving...',
-      replayTimeline: 'Replay timeline'
+      replayTimeline: 'Replay timeline',
+      reportTitle: 'Incident report',
+      nextAction: 'Next action',
+      checklistComplete: 'Checklist complete',
+      timelineEvents: 'Timeline events'
     } satisfies IncidentCopy,
     stats: {
       title: 'Statistics',
@@ -239,7 +247,11 @@ export const copyByLanguage = {
       evidence: '증거',
       acknowledge: '증거와 함께 확인',
       saving: '저장 중...',
-      replayTimeline: '재생 타임라인'
+      replayTimeline: '재생 타임라인',
+      reportTitle: 'Incident report',
+      nextAction: '다음 조치',
+      checklistComplete: '체크리스트 완료',
+      timelineEvents: '타임라인 이벤트'
     } satisfies IncidentCopy,
     stats: {
       title: '통계',

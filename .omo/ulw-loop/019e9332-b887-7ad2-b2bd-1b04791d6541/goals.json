@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "createdAt": "2026-06-05T00:17:30.565Z",
+  "updatedAt": "2026-06-05T00:26:08.076Z",
+  "briefPath": ".omo/ulw-loop/019e9332-b887-7ad2-b2bd-1b04791d6541/brief.md",
+  "goalsPath": ".omo/ulw-loop/019e9332-b887-7ad2-b2bd-1b04791d6541/goals.json",
+  "ledgerPath": ".omo/ulw-loop/019e9332-b887-7ad2-b2bd-1b04791d6541/ledger.jsonl",
+  "codexGoalMode": "aggregate",
+  "goals": [
+    {
+      "id": "G001-build-more-things-that-make-pico-saf",
+      "title": "Build more things that make Pico SafeRoom unique and special compared...",
+      "objective": "Build more things that make Pico SafeRoom unique and special compared to similar IoT safety dashboards. Scope for this ULW run: add an Incident Command Report feature that turns an alert replay into a shareable response packet with incident metadata, guided checklist status, operator response evidence, related blackbox timeline, and next action. Preserve existing user changes in AGENTS.md and agent-map.md. Use TDD, live HTTP QA, browser QA, cleanup receipts, and final review.",
+      "status": "pending",
+      "successCriteria": [
+        {
+          "id": "C001",
+          "scenario": "HTTP happy path: start backend on 127.0.0.1:8765 with QA DB, POST a critical gas event to /internal/events, POST acknowledgement evidence to /api/alerts/1/ack, then curl -i /api/alerts/1/report. PASS if status is HTTP/1.1 200 OK and body includes report_id alert-1, next_action monitor_until_clear, checklist total 3 completed 3, and operator note.",
+          "userModel": "happy",
+          "expectedEvidence": ".omo/ulw-loop/evidence/incident-report-http-happy.txt",
+          "capturedEvidence": ".omo/ulw-loop/evidence/incident-report-http-happy.txt shows 201 event, 200 ack, 200 report with report_id alert-1, next_action monitor_until_clear, checklist 3/3, operator note. cleanup: Ctrl-C stopped QA server session 89977; lsof :8765 no listener; removed /private/tmp/ulw-incident-report.db* and log.",
+          "status": "pass",
+          "capturedAt": "2026-06-05T00:26:01.096Z"
+        },
+        {
+          "id": "C002",
+          "scenario": "HTTP edge path: start backend on 127.0.0.1:8765 with QA DB and curl -i /api/alerts/999/report before any matching alert exists. PASS if status is HTTP/1.1 404 Not Found and body contains Alert not found.",
+          "userModel": "edge",
+          "expectedEvidence": ".omo/ulw-loop/evidence/incident-report-http-404.txt",
+          "capturedEvidence": ".omo/ulw-loop/evidence/incident-report-http-404.txt shows HTTP/1.1 404 Not Found and body {\"detail\":\"Alert not found\"}. cleanup: Ctrl-C stopped QA server session 89977; lsof :8765 no listener; removed /private/tmp/ulw-incident-report.db* and log.",
+          "status": "pass",
+          "capturedAt": "2026-06-05T00:25:46.936Z"
+        },
+        {
+          "id": "C003",
+          "scenario": "Browser regression path: build frontend, serve backend static dashboard on 127.0.0.1:8766 with seeded critical alert, open the real dashboard in browser, sign up with email, click Replay incident, verify the Incident response panel still renders Replay timeline and the new Incident report section/action. PASS if screenshot shows Incident response plus Incident report without blocking dashboard navigation.",
+          "userModel": "regression",
+          "expectedEvidence": ".omo/ulw-loop/evidence/incident-report-browser.png plus .omo/ulw-loop/evidence/incident-report-browser-actions.txt",
+          "capturedEvidence": ".omo/ulw-loop/evidence/incident-report-browser-actions.txt shows signup, Replay incident click, Incident response/report verification; .omo/ulw-loop/evidence/incident-report-browser.png is 1440x1918 PNG. cleanup: browser.close(); Ctrl-C stopped QA server session 89977; lsof :8765 no listener; removed /private/tmp/ulw-incident-report.db* and log.",
+          "status": "pass",
+          "capturedAt": "2026-06-05T00:26:08.076Z"
+        }
+      ],
+      "attempt": 0,
+      "createdAt": "2026-06-05T00:17:30.565Z",
+      "updatedAt": "2026-06-05T00:26:08.076Z"
+    }
+  ],
+  "codexObjective": "Complete the durable ulw-loop plan in .omo/ulw-loop/019e9332-b887-7ad2-b2bd-1b04791d6541/goals.json, including later accepted/appended stories, under the original brief constraints; use .omo/ulw-loop/019e9332-b887-7ad2-b2bd-1b04791d6541/ledger.jsonl as the audit trail."
+}

@@ -194,6 +194,13 @@ def create_app(
         except KeyError as exc:
             raise HTTPException(status_code=404, detail="Alert not found") from exc
 
+    @app.get("/api/alerts/{alert_id}/report")
+    def alert_report(alert_id: int) -> dict:
+        try:
+            return get_store().alert_report(alert_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail="Alert not found") from exc
+
     @app.post("/api/alerts/{alert_id}/ack")
     def ack_alert(alert_id: int, payload: AlertResponsePayload | None = Body(default=None)) -> dict:
         response_payload = payload or AlertResponsePayload()

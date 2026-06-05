@@ -367,6 +367,59 @@ def test_alert_replay_unknown_alert_returns_404(tmp_path):
     assert response.json()["detail"] == "Alert not found"
 
 
+def test_alert_report_returns_command_packet_after_ack(tmp_path):
+    client = TestClient(make_app(tmp_path))
+    client.post("/internal/events", json=make_payload(event_id="gas-report", sensor_id="gas", value=601))
+    client.post(
+        "/api/alerts/1/ack",
+        json={
+            "checklist": ["evacuate", "ventilate", "inspect_sensor"],
+            "note": "Operator opened ventilation.",
+            "evidence": "Window open and sensor cable checked.",
+        },
+    )
+
+    response = client.get("/api/alerts/1/report")
+
+    assert response.status_code == 200
+    report = response.json()["report"]
+    assert report["report_id"] == "alert-1"
+    assert report["incident"]["code"] == "gas.critical"
+    assert report["checklist_status"] == {"total": 3, "completed": 3, "missing": []}
+    assert report["operator_response"]["note"] == "Operator opened ventilation."
+    assert report["next_action"] == "monitor_until_clear"
+    assert report["timeline_count"] >= 2
+
+
+def test_alert_report_ignores_unknown_checklist_items(tmp_path):
+    client = TestClient(make_app(tmp_path))
+    client.post("/internal/events", json=make_payload(event_id="gas-report-extra", sensor_id="gas", value=601))
+    client.post(
+        "/api/alerts/1/ack",
+        json={
+            "checklist": ["evacuate", "ventilate", "inspect_sensor", "bogus"],
+            "note": "Operator added a bogus checklist item.",
+        },
+    )
+
+    response = client.get("/api/alerts/1/report")
+
+    assert response.status_code == 200
+    checklist_status = response.json()["report"]["checklist_status"]
+    assert checklist_status["total"] == 3
+    assert checklist_status["completed"] == 3
+    assert checklist_status["missing"] == []
+
+
+def test_alert_report_unknown_alert_returns_404(tmp_path):
+    client = TestClient(make_app(tmp_path))
+
+    response = client.get("/api/alerts/999/report")
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Alert not found"
+
+
 def test_ack_alert_rejects_too_long_response_note(tmp_path):
     client = TestClient(make_app(tmp_path))
     client.post("/internal/events", json=make_payload(event_id="gas-long-note", sensor_id="gas", value=601))

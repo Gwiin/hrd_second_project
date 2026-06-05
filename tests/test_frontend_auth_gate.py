@@ -69,6 +69,15 @@ def test_dashboard_uses_incident_replay_and_ack_endpoints():
     assert "fetch(`/api/alerts/${alertId}/ack`" in app
 
 
+def test_incident_response_panel_surfaces_command_report():
+    app = frontend_source()
+
+    assert "Incident report" in app
+    assert "Next action" in app
+    assert "Checklist complete" in app
+    assert "fetch(`/api/alerts/${alertId}/report`" in app
+
+
 def test_dashboard_fetches_statistics_endpoint():
     app = APP_TSX.read_text()
 

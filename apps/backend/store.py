@@ -98,6 +98,9 @@ class ReadingStore:
     def alert_replay(self, alert_id: int) -> dict[str, Any]:
         return self._repository.alert_replay(alert_id)
 
+    def alert_report(self, alert_id: int) -> dict[str, Any]:
+        return self._repository.alert_report(alert_id)
+
     def ack_alert(
         self,
         alert_id: int,
