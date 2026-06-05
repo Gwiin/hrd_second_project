@@ -1,0 +1,44 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.15, pytest-9.0.3, pluggy-1.6.0 -- /Users/chanpark/2n_project/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/chanpark/2n_project
+plugins: anyio-4.13.0
+collecting ... collected 1 item
+
+tests/test_backend.py::test_alert_report_returns_command_report_after_partial_response FAILED [100%]
+
+=================================== FAILURES ===================================
+_______ test_alert_report_returns_command_report_after_partial_response ________
+
+tmp_path = PosixPath('/private/var/folders/jh/c5tw07492pdg6_jcyc8x1s240000gn/T/pytest-of-chanpark/pytest-23/test_alert_report_returns_comm0')
+
+    def test_alert_report_returns_command_report_after_partial_response(tmp_path):
+        client = TestClient(make_app(tmp_path))
+        client.post("/internal/events", json=make_payload(event_id="gas-report", sensor_id="gas", value=601))
+        client.post(
+            "/api/alerts/1/ack",
+            json={
+                "checklist": ["evacuate"],
+                "note": "Operator opened ventilation.",
+                "evidence": "Window open and sensor cable checked.",
+            },
+        )
+    
+        response = client.get("/api/alerts/1/report")
+    
+        assert response.status_code == 200
+        report = response.json()["report"]
+>       assert report["title"] == "Incident Command Report #1"
+               ^^^^^^^^^^^^^^^
+E       KeyError: 'title'
+
+tests/test_backend.py:434: KeyError
+=============================== warnings summary ===============================
+.venv/lib/python3.11/site-packages/fastapi/testclient.py:1
+  /Users/chanpark/2n_project/.venv/lib/python3.11/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_backend.py::test_alert_report_returns_command_report_after_partial_response
+========================= 1 failed, 1 warning in 0.27s =========================

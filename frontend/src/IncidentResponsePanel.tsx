@@ -36,23 +36,31 @@ type IncidentResponse = {
   readonly evidence: string;
 };
 
+type ResponseReview = {
+  readonly status: 'not_started' | 'partial' | 'complete';
+  readonly completed_checklist: readonly string[];
+  readonly missed_checklist: readonly ChecklistItem[];
+  readonly unknown_checklist: readonly string[];
+  readonly completion_ratio: number;
+  readonly score_label: string;
+  readonly next_best_action: string;
+};
+
 type AlertReplay = {
   readonly alert: IncidentAlert;
   readonly guidance: Guidance;
   readonly response: IncidentResponse | null;
+  readonly response_review: ResponseReview;
   readonly related_events: readonly TimelineEntry[];
 };
 
 type IncidentReport = {
-  readonly report_id: string;
-  readonly checklist_status: {
-    readonly total: number;
-    readonly completed: number;
-    readonly missing: readonly ChecklistItem[];
-  };
-  readonly operator_response: IncidentResponse | null;
-  readonly next_action: string;
-  readonly timeline_count: number;
+  readonly title: string;
+  readonly response_review: ResponseReview;
+  readonly operator_note: string;
+  readonly operator_evidence: string;
+  readonly missed_actions: readonly ChecklistItem[];
+  readonly timeline: readonly TimelineEntry[];
 };
 
 type IncidentResponsePanelProps = {
@@ -68,6 +76,12 @@ type IncidentMessageKey = 'replayUnavailable' | 'saveFailed' | 'saved';
 
 function formatIncidentStatusLabel(status: string, labels: Record<StatusLabelKey, string>): string {
   return labels[status as StatusLabelKey] ?? status;
+}
+
+function formatReviewStatusLabel(review: ResponseReview, copy: IncidentCopy): string {
+  if (review.status === 'complete') return copy.responseComplete;
+  if (review.status === 'partial') return copy.partialResponse;
+  return copy.notStarted;
 }
 
 export function IncidentResponsePanel({
@@ -97,6 +111,7 @@ export function IncidentResponsePanel({
     checklist: []
   };
   const response = replay?.response ?? null;
+  const responseReview = report?.response_review ?? replay?.response_review ?? null;
 
   async function loadReplay(alertId: number) {
     setBusy(true);
@@ -126,7 +141,7 @@ export function IncidentResponsePanel({
     const alertId = selectedAlertId;
 
     const form = new FormData(event.currentTarget);
-    const checklist = guidance.checklist.map((item) => item.id);
+    const checklist = form.getAll('response-checklist').map((value) => String(value));
     const payload = {
       checklist,
       note: String(form.get('response-note') ?? ''),
@@ -197,28 +212,46 @@ export function IncidentResponsePanel({
       <div className="incident-guidance">
         <strong>{guidance.summary}</strong>
         <p>{guidance.recommended_action}</p>
-        <ul>
+        <ul aria-label={copy.completedActions}>
           {guidance.checklist.map((item) => (
             <li key={item.id}>{item.label}</li>
           ))}
         </ul>
       </div>
 
-      {report && (
-        <div className="incident-report">
-          <strong>{copy.reportTitle}</strong>
+      {responseReview && (
+        <div className="incident-review">
+          <strong>{copy.drillTitle}</strong>
           <div>
-            <span>{report.report_id}</span>
-            <em>{copy.nextAction}: {report.next_action.split('_').join(' ')}</em>
+            <span>{copy.scoreLabel}: {formatReviewStatusLabel(responseReview, copy)}</span>
+            <em>{Math.round(responseReview.completion_ratio * 100)}%</em>
           </div>
-          <small>
-            {copy.checklistComplete}: {report.checklist_status.completed}/{report.checklist_status.total}
-          </small>
-          <small>{copy.timelineEvents}: {report.timeline_count}</small>
+          <small>{copy.nextBestAction}: {responseReview.next_best_action}</small>
+          {responseReview.missed_checklist.length > 0 && (
+            <ul aria-label={copy.missedActions}>
+              {responseReview.missed_checklist.map((item) => (
+                <li key={item.id}>{item.label}</li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
       <form className="incident-form" onSubmit={handleResponseSubmit}>
+        <fieldset className="incident-checklist">
+          <legend>{copy.completedActions}</legend>
+          {guidance.checklist.map((item) => (
+            <label className="incident-checklist-item" key={item.id}>
+              <input
+                type="checkbox"
+                name="response-checklist"
+                value={item.id}
+                defaultChecked={response?.checklist.includes(item.id) ?? false}
+              />
+              <span>{item.label}</span>
+            </label>
+          ))}
+        </fieldset>
         <label>
           <span>{copy.responseNote}</span>
           <textarea name="response-note" maxLength={500} defaultValue={response?.note ?? ''} />
@@ -232,6 +265,17 @@ export function IncidentResponsePanel({
         </button>
         {messageKey && <small>{copy[messageKey]}</small>}
       </form>
+
+      {report && (
+        <div className="incident-report">
+          <strong>{copy.reportTitle}</strong>
+          <div>
+            <span>{report.title}</span>
+            <em>{copy.checklistComplete}: {report.response_review.completed_checklist.length}/{guidance.checklist.length}</em>
+          </div>
+          <small>{copy.timelineEvents}: {report.timeline.length}</small>
+        </div>
+      )}
 
       {replay && (
         <div className="incident-replay">

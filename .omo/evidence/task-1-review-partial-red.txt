@@ -1,0 +1,23 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.15, pytest-9.0.3, pluggy-1.6.0 -- /Users/chanpark/2n_project/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/chanpark/2n_project
+plugins: anyio-4.13.0
+collecting ... ERROR: found no collectors for /Users/chanpark/2n_project/tests/test_incidents.py::test_review_response_marks_partial_gas_drill
+
+collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+___________________ ERROR collecting tests/test_incidents.py ___________________
+ImportError while importing test module '/Users/chanpark/2n_project/tests/test_incidents.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+../.pyenv/versions/3.11.15/lib/python3.11/importlib/__init__.py:126: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_incidents.py:1: in <module>
+    from apps.backend.incidents import review_incident_response
+E   ImportError: cannot import name 'review_incident_response' from 'apps.backend.incidents' (/Users/chanpark/2n_project/apps/backend/incidents.py)
+=========================== short test summary info ============================
+ERROR tests/test_incidents.py
+=============================== 1 error in 0.08s ===============================

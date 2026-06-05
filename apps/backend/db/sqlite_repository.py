@@ -7,7 +7,12 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from apps.backend.incidents import clean_response_text, guidance_for_code
+from apps.backend.incidents import (
+    UnknownChecklistItemError,
+    clean_response_text,
+    guidance_for_code,
+    review_incident_response,
+)
 from apps.backend.devices import LEVEL1_DEVICES
 from shared.schemas.device_heartbeat import DeviceHeartbeat
 from shared.schemas.process_heartbeat import ProcessHeartbeat
@@ -394,6 +399,20 @@ class SQLiteRepository:
     ) -> dict[str, Any]:
         resolved_at = datetime.now(timezone.utc).isoformat()
         with self._connect() as conn:
+            row = conn.execute(
+                """
+                SELECT alert_id, level, code, message, zone_id, device_id,
+                       sensor_id, value, status, created_at, resolved_at
+                FROM alerts
+                WHERE alert_id = ?
+                """,
+                (alert_id,),
+            ).fetchone()
+            if row is None:
+                raise KeyError(alert_id)
+            review = review_incident_response(row["code"], checklist or [])
+            if review["unknown_checklist"]:
+                raise UnknownChecklistItemError(review["unknown_checklist"][0])
             conn.execute(
                 """
                 UPDATE alerts
@@ -426,19 +445,18 @@ class SQLiteRepository:
                     """,
                     (
                         alert_id,
-                        json.dumps(checklist or [], sort_keys=True),
+                        json.dumps(review["completed_checklist"], sort_keys=True),
                         clean_response_text(note),
                         clean_response_text(evidence),
                         resolved_at,
                         resolved_at,
                     ),
                 )
-        if row is None:
-            raise KeyError(alert_id)
         response = self._incident_response(alert_id)
         result: dict[str, Any] = {"alert": dict(row)}
         if response is not None:
             result["response"] = response
+        result["response_review"] = review_incident_response(row["code"], response["checklist"] if response else [])
         return result
 
     def alert_replay(self, alert_id: int) -> dict[str, Any]:
@@ -462,10 +480,12 @@ class SQLiteRepository:
             events.extend(_device_heartbeat_timeline_events(conn))
             events.extend(_process_heartbeat_timeline_events(conn))
         events.sort(key=lambda event: event["timestamp"], reverse=True)
+        response = self._incident_response(alert_id)
         return {
             "alert": alert,
             "guidance": guidance_for_code(alert["code"]),
-            "response": self._incident_response(alert_id),
+            "response": response,
+            "response_review": review_incident_response(alert["code"], response["checklist"] if response else []),
             "related_events": events[:25],
         }
 
@@ -474,42 +494,17 @@ class SQLiteRepository:
         alert = replay["alert"]
         guidance = replay["guidance"]
         response = replay["response"]
-        checklist_items = guidance["checklist"]
-        checklist_ids = {item["id"] for item in checklist_items}
-        completed = checklist_ids.intersection(response["checklist"]) if response else set()
-        missing = [item for item in checklist_items if item["id"] not in completed]
-        next_action = "monitor_until_clear"
-        if response is None:
-            next_action = "execute_guidance"
-        elif missing:
-            next_action = "complete_response_checklist"
+        response_review = replay["response_review"]
         return {
             "report": {
-                "report_id": f"alert-{alert['alert_id']}",
-                "incident": {
-                    "alert_id": alert["alert_id"],
-                    "level": alert["level"],
-                    "code": alert["code"],
-                    "message": alert["message"],
-                    "zone_id": alert["zone_id"],
-                    "device_id": alert["device_id"],
-                    "sensor_id": alert["sensor_id"],
-                    "value": alert["value"],
-                    "status": alert["status"],
-                    "created_at": alert["created_at"],
-                    "resolved_at": alert["resolved_at"],
-                },
+                "title": f"Incident Command Report #{alert['alert_id']}",
+                "alert": alert,
                 "guidance_summary": guidance["summary"],
-                "recommended_action": guidance["recommended_action"],
-                "checklist_status": {
-                    "total": len(checklist_items),
-                    "completed": len(completed),
-                    "missing": missing,
-                },
-                "operator_response": response,
-                "next_action": next_action,
-                "timeline_count": len(replay["related_events"]),
-                "related_events": replay["related_events"][:8],
+                "response_review": response_review,
+                "operator_note": response["note"] if response else "",
+                "operator_evidence": response["evidence"] if response else "",
+                "missed_actions": response_review["missed_checklist"],
+                "timeline": replay["related_events"][:5],
             }
         }
 

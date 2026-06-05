@@ -76,10 +76,32 @@ def test_dashboard_uses_incident_replay_and_ack_endpoints():
 def test_incident_response_panel_surfaces_command_report():
     app = frontend_source()
 
-    assert "Incident report" in app
-    assert "Next action" in app
+    assert "Incident command report" in app
+    assert "Next best action" in app
     assert "Checklist complete" in app
     assert "fetch(`/api/alerts/${alertId}/report`" in app
+
+
+def test_incident_drill_copy_and_interactive_checklist_contract():
+    app = frontend_source()
+
+    assert "response_review" in app
+    assert 'type="checkbox"' in app
+    assert 'name="response-checklist"' in app
+    assert "Incident drill" in app
+    assert "Partial response" in app
+    assert "Response complete" in app
+    assert "Incident command report" in app
+    assert "Incident 드릴" in app
+    assert "부분 대응" in app
+    assert "대응 완료" in app
+
+
+def test_incident_drill_does_not_autocomplete_all_actions():
+    app = source_text(INCIDENT_PANEL_TSX)
+
+    assert "form.getAll('response-checklist')" in app
+    assert "guidance.checklist.map((item) => item.id)" not in app
 
 
 def test_dashboard_fetches_statistics_endpoint():

@@ -1,0 +1,22 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.15, pytest-9.0.3, pluggy-1.6.0 -- /Users/chanpark/2n_project/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/chanpark/2n_project
+plugins: anyio-4.13.0
+collecting ... collected 1 item
+
+tests/test_frontend_auth_gate.py::test_incident_drill_copy_and_interactive_checklist_contract FAILED [100%]
+
+=================================== FAILURES ===================================
+_________ test_incident_drill_copy_and_interactive_checklist_contract __________
+
+    def test_incident_drill_copy_and_interactive_checklist_contract():
+        app = frontend_source()
+    
+>       assert "response_review" in app
+E       assert 'response_review' in "import { useEffect, useState, type FormEvent } from 'react';\nimport { IncidentResponsePanel } from './IncidentResponsePanel';\nimport { copyByLanguage, languageOptions, sensorIds, type Language, type QualityLabelKey, type StatusLabelKey } from './language';\n\ntype Device = {\n  device_id: string;\n  zone_id: string;\n  device_name: string;\n  model: string;\n  status: string;\n  protocol?: string;\n  last_seen_at?: string | null;\n};\n\ntype Health = {\n  app: string;\n  status: string;\n  safety_state: string;\n  uptime_seconds: number;\n  last_update: string | null;\n  processes: Record<string, string>;\n};\n\ntype Reading = {\n  site_id: string;\n  zone_id: string;\n  device_id: string;\n  sensor_id: string;\n  value: number | boolean;\n  unit: string;\n  timestamp: string;\n  quality: string;\n};\n\ntype LogEntry = {\n  timestamp: string;\n  level: string;\n  message: string;\n};\n\ntype Alert = {\n  alert_id: number | null;\n  level: string;\n  code: string;\n  message: string;\n  zone_id: string | null;\n  device_id: string | null;\n  sensor_id: string | null;\n  value: number | null;\n  status: string;\n  created_at: string;\n};\n\ntype TimelineEntry = {\n  id: string;\...체크리스트 완료',\n      timelineEvents: '타임라인 이벤트'\n    } satisfies IncidentCopy,\n    stats: {\n      title: '통계',\n      description: '대시보드에 보이는 데이터를 기준으로 만든 운영 통계입니다.',\n      safetyState: '안전 상태',\n      devicesOnline: '온라인 장치',\n      totalReadings: '총 센서값',\n      openAlerts: '열린 alert',\n      staleSensors: '오래된 센서',\n      sensorBreakdown: '센서별 통계',\n      deviceBreakdown: '장치별 통계',\n      alertBreakdown: 'Alert 통계',\n      totalAlerts: '전체 alert',\n      offlineDevices: '오프라인 장치',\n      latestSensors: '최근 센서 수',\n      count: '개수',\n      latest: '최근값',\n      average: '평균',\n      motionTrue: '움직임 감지',\n      emptySensors: '아직 센서값이 없습니다.',\n      loading: '통계 불러오는 중',\n      loadingBody: 'Backend 통계 요약을 기다리는 중입니다.',\n      errorTitle: '통계를 사용할 수 없습니다',\n      errorBody: '통계가 재연결되는 동안 대시보드는 계속 사용할 수 있습니다.',\n      llmContext: '향후 LLM용 요약',\n      llmContextPreview: 'LLM 분석 컨텍스트',\n      environmentByRoom: '방별 환경',\n      environmentByRoomBody: '각 방에서 마지막으로 수집된 환경 값입니다.',\n      recentEnvironmentTrend: '최근 환경 추이',\n      recentEnvironmentTrendBody: '블랙박스 타임라인의 최근 센서 이벤트입니다.',\n      noRoomData: '최근 센서값 없음',\n      noRecentTrend: '최근 센서 이력이 아직 부족합니다.'\n    }\n  }\n} as const;\n"
+
+tests/test_frontend_auth_gate.py:88: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_frontend_auth_gate.py::test_incident_drill_copy_and_interactive_checklist_contract
+============================== 1 failed in 0.03s ===============================

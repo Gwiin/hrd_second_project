@@ -1,7 +1,7 @@
-# ULW Notepad: Incident Command Report
+# ULW Notepad: Incident Drill Mode
 
 ## Objective
-Build a differentiating Pico SafeRoom feature: an Incident Command Report that turns existing alert replay + acknowledgement evidence into a shareable response packet.
+Build a differentiating Pico SafeRoom feature: an active Incident Drill Mode that lets operators select performed checklist actions, receives deterministic backend feedback, and generates a compact command report.
 
 ## Skills Used
 - `omo:ulw-plan`: requested by user; planning scope and criteria.
@@ -13,28 +13,28 @@ Build a differentiating Pico SafeRoom feature: an Incident Command Report that t
 - `omo:review-work` / `codex-ultrawork-reviewer`: final verification because this is multi-file work.
 
 ## Scope
-- Backend: add `/api/alerts/{alert_id}/report` returning a deterministic command-report packet.
-- Frontend: expose report status/next action inside the existing Incident Response panel.
-- Tests: backend API tests and source-level frontend contract tests.
+- Backend: add deterministic drill review, include `response_review` in replay/ack, reject unknown checklist ids with HTTP 422, and expose `/api/alerts/{alert_id}/report`.
+- Frontend: replace auto-completed checklist submission with interactive checkbox evidence, show partial/complete feedback, next best action, and command report summary inside the existing Incident Response panel.
+- Tests: backend helper/API tests, source-level frontend contract tests, full pytest, and frontend build.
 - Out of scope: real OAuth provider changes, hardware/Pico firmware changes, root `AGENTS.md`, `agent-map.md`.
 
 ## Success Criteria
-- C001 HTTP happy path: POST critical gas event, acknowledge with evidence, curl report endpoint returns report_id, next_action, checklist counts, note.
+- C001 HTTP happy path: POST critical gas event, acknowledge with partial checklist evidence, replay/report return `response_review.status == "partial"`, `completion_ratio == 0.33`, missed actions, operator note/evidence, and command report title.
 - C002 HTTP edge: unknown report alert id returns 404 with `Alert not found`.
-- C003 Browser regression: built dashboard still supports signup, replay, and displays Incident response plus Incident report.
+- C003 Browser regression: built dashboard supports signup, replay, one checked action, two unchecked actions, partial feedback, next-best action, and Incident command report.
 
 ## TDD Evidence
-- RED backend report tests: `/api/alerts/1/report` returned 404 instead of 200; `/api/alerts/999/report` returned default `Not Found`; malformed checklist regression returned `completed == 4` against total `3`.
-- RED frontend contract test: `test_incident_response_panel_surfaces_command_report` failed because `Incident report` was absent.
-- GREEN backend report tests: `tests/test_backend.py::test_alert_report_returns_command_packet_after_ack`, `::test_alert_report_unknown_alert_returns_404`, and `::test_alert_report_ignores_unknown_checklist_items` passed.
-- GREEN frontend/build checks: `tests/test_frontend_auth_gate.py::test_incident_response_panel_surfaces_command_report` passed; `npm --prefix frontend run build` passed.
-- Full verification: `.venv/bin/python -m pytest` passed with `106 passed, 1 warning`.
-- Manual HTTP QA: `.omo/ulw-loop/evidence/incident-report-http-happy.txt` and `.omo/ulw-loop/evidence/incident-report-http-404.txt`.
-- Manual browser QA: `.omo/ulw-loop/evidence/incident-report-browser-actions.txt` and `.omo/ulw-loop/evidence/incident-report-browser.png`.
-- Cleanup receipt: QA server stopped, port 8765 had no listener, `/private/tmp/ulw-incident-report.db*` and log removed, browser closed.
+- RED backend helper tests: `.omo/evidence/task-1-review-partial-red.txt`, `.omo/evidence/task-1-review-not-started-red.txt`.
+- GREEN backend helper tests: `.omo/evidence/task-1-review-partial-green.txt`, `.omo/evidence/task-1-review-not-started-green.txt`.
+- RED backend API tests: `.omo/evidence/task-2-replay-review-red.txt`, `.omo/evidence/task-2-ack-partial-red.txt`, `.omo/evidence/task-2-ack-unknown-red.txt`, `.omo/evidence/task-3-report-partial-red.txt`, `.omo/evidence/task-3-report-not-started-red.txt`.
+- GREEN backend API tests: `.omo/evidence/task-2-replay-review-green.txt`, `.omo/evidence/task-2-ack-partial-green.txt`, `.omo/evidence/task-2-ack-unknown-green.txt`, `.omo/evidence/task-3-report-partial-green.txt`, `.omo/evidence/task-3-report-not-started-green.txt`.
+- GREEN frontend contract/build checks: `.omo/evidence/task-4-drill-copy-green.txt`, `.omo/evidence/task-4-no-autocomplete-green.txt`, `.omo/evidence/task-4-frontend-source-full.txt`, `.omo/evidence/task-4-frontend-build.txt`.
+- Full verification: `.omo/evidence/incident-drill-full-pytest.txt`, `.omo/evidence/incident-drill-frontend-build.txt`, `.omo/evidence/incident-drill-diff-check.txt`.
+- Manual HTTP QA: `.omo/evidence/incident-drill-http-ack-partial.txt`, `.omo/evidence/incident-drill-http-ack-unknown.txt`, `.omo/evidence/incident-drill-http-replay.txt`, `.omo/evidence/incident-drill-http-report.txt`.
+- Manual browser QA: `.omo/evidence/incident-drill-browser-actions.txt` and `.omo/evidence/incident-drill-browser.png`.
+- Cleanup receipt: QA servers stopped, ports 8766/8767 had no listeners, browser closed.
 
 ## Findings
-- Worktree has pre-existing user changes in `AGENTS.md` and untracked `agent-map.md`; do not touch them.
 - Existing incident replay/ack flow is the best foundation. This avoids another passive dashboard/statistics feature.
 - Parallel `steer` calls race on the same goals file; criteria repair was done sequentially.
 - Subagents became available after tool discovery; Planner is running in background.

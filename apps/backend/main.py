@@ -20,7 +20,7 @@ from apps.backend.auth import (
     new_oauth_state,
     social_provider_summaries,
 )
-from apps.backend.incidents import AlertResponsePayload
+from apps.backend.incidents import AlertResponsePayload, UnknownChecklistItemError
 from apps.backend.realtime import RealtimeHub
 from apps.backend.store import ReadingStore
 from shared.schemas.device_heartbeat import DeviceHeartbeat
@@ -213,6 +213,8 @@ def create_app(
             )
         except KeyError as exc:
             raise HTTPException(status_code=404, detail="Alert not found") from exc
+        except UnknownChecklistItemError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     @app.websocket("/ws/realtime")
     async def realtime_ws(websocket: WebSocket) -> None:

@@ -1,0 +1,37 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.15, pytest-9.0.3, pluggy-1.6.0 -- /Users/chanpark/2n_project/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/chanpark/2n_project
+plugins: anyio-4.13.0
+collecting ... collected 1 item
+
+tests/test_backend.py::test_ack_alert_rejects_unknown_checklist_item FAILED [100%]
+
+=================================== FAILURES ===================================
+________________ test_ack_alert_rejects_unknown_checklist_item _________________
+
+tmp_path = PosixPath('/private/var/folders/jh/c5tw07492pdg6_jcyc8x1s240000gn/T/pytest-of-chanpark/pytest-15/test_ack_alert_rejects_unknown0')
+
+    def test_ack_alert_rejects_unknown_checklist_item(tmp_path):
+        client = TestClient(make_app(tmp_path))
+        client.post("/internal/events", json=make_payload(event_id="gas-review-unknown", sensor_id="gas", value=601))
+    
+        response = client.post(
+            "/api/alerts/1/ack",
+            json={"checklist": ["fake_step"], "note": "Bad drill data."},
+        )
+    
+>       assert response.status_code == 422
+E       assert 200 == 422
+E        +  where 200 = <Response [200 OK]>.status_code
+
+tests/test_backend.py:405: AssertionError
+=============================== warnings summary ===============================
+.venv/lib/python3.11/site-packages/fastapi/testclient.py:1
+  /Users/chanpark/2n_project/.venv/lib/python3.11/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_backend.py::test_ack_alert_rejects_unknown_checklist_item
+========================= 1 failed, 1 warning in 0.25s =========================

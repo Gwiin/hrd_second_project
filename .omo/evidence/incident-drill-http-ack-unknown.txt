@@ -1,0 +1,7 @@
+HTTP/1.1 422 Unprocessable Entity
+date: Fri, 05 Jun 2026 05:20:34 GMT
+server: uvicorn
+content-length: 46
+content-type: application/json
+
+{"detail":"Unknown checklist item: fake_step"}

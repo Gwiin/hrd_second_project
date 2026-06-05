@@ -358,6 +358,54 @@ def test_alert_replay_returns_incident_bundle(tmp_path):
     assert {event["type"] for event in body["related_events"]} >= {"alert", "reading", "log"}
 
 
+def test_alert_replay_includes_not_started_drill_review(tmp_path):
+    client = TestClient(make_app(tmp_path))
+    client.post("/internal/events", json=make_payload(event_id="gas-review-replay", sensor_id="gas", value=601))
+
+    response = client.get("/api/alerts/1/replay")
+
+    assert response.status_code == 200
+    review = response.json()["response_review"]
+    assert review["status"] == "not_started"
+    assert review["completed_checklist"] == []
+    assert [item["id"] for item in review["missed_checklist"]] == ["evacuate", "ventilate", "inspect_sensor"]
+    assert review["completion_ratio"] == 0.0
+    assert review["next_best_action"] == "Move people away from the room"
+
+
+def test_ack_alert_returns_partial_drill_review(tmp_path):
+    client = TestClient(make_app(tmp_path))
+    client.post("/internal/events", json=make_payload(event_id="gas-review-ack", sensor_id="gas", value=601))
+
+    response = client.post(
+        "/api/alerts/1/ack",
+        json={"checklist": ["evacuate"], "note": "Operator started evacuation."},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["response"]["checklist"] == ["evacuate"]
+    review = body["response_review"]
+    assert review["status"] == "partial"
+    assert review["completed_checklist"] == ["evacuate"]
+    assert [item["id"] for item in review["missed_checklist"]] == ["ventilate", "inspect_sensor"]
+    assert review["completion_ratio"] == 0.33
+    assert review["score_label"] == "Partial response"
+
+
+def test_ack_alert_rejects_unknown_checklist_item(tmp_path):
+    client = TestClient(make_app(tmp_path))
+    client.post("/internal/events", json=make_payload(event_id="gas-review-unknown", sensor_id="gas", value=601))
+
+    response = client.post(
+        "/api/alerts/1/ack",
+        json={"checklist": ["fake_step"], "note": "Bad drill data."},
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"] == "Unknown checklist item: fake_step"
+
+
 def test_alert_replay_unknown_alert_returns_404(tmp_path):
     client = TestClient(make_app(tmp_path))
 
@@ -367,13 +415,13 @@ def test_alert_replay_unknown_alert_returns_404(tmp_path):
     assert response.json()["detail"] == "Alert not found"
 
 
-def test_alert_report_returns_command_packet_after_ack(tmp_path):
+def test_alert_report_returns_command_report_after_partial_response(tmp_path):
     client = TestClient(make_app(tmp_path))
     client.post("/internal/events", json=make_payload(event_id="gas-report", sensor_id="gas", value=601))
     client.post(
         "/api/alerts/1/ack",
         json={
-            "checklist": ["evacuate", "ventilate", "inspect_sensor"],
+            "checklist": ["evacuate"],
             "note": "Operator opened ventilation.",
             "evidence": "Window open and sensor cable checked.",
         },
@@ -383,32 +431,30 @@ def test_alert_report_returns_command_packet_after_ack(tmp_path):
 
     assert response.status_code == 200
     report = response.json()["report"]
-    assert report["report_id"] == "alert-1"
-    assert report["incident"]["code"] == "gas.critical"
-    assert report["checklist_status"] == {"total": 3, "completed": 3, "missing": []}
-    assert report["operator_response"]["note"] == "Operator opened ventilation."
-    assert report["next_action"] == "monitor_until_clear"
-    assert report["timeline_count"] >= 2
+    assert report["title"] == "Incident Command Report #1"
+    assert report["alert"]["code"] == "gas.critical"
+    assert report["guidance_summary"] == "Critical gas level detected"
+    assert report["response_review"]["status"] == "partial"
+    assert report["response_review"]["score_label"] == "Partial response"
+    assert report["operator_note"] == "Operator opened ventilation."
+    assert report["operator_evidence"] == "Window open and sensor cable checked."
+    assert [item["id"] for item in report["missed_actions"]] == ["ventilate", "inspect_sensor"]
+    assert len(report["timeline"]) <= 5
 
 
-def test_alert_report_ignores_unknown_checklist_items(tmp_path):
+def test_alert_report_before_response_is_not_started(tmp_path):
     client = TestClient(make_app(tmp_path))
-    client.post("/internal/events", json=make_payload(event_id="gas-report-extra", sensor_id="gas", value=601))
-    client.post(
-        "/api/alerts/1/ack",
-        json={
-            "checklist": ["evacuate", "ventilate", "inspect_sensor", "bogus"],
-            "note": "Operator added a bogus checklist item.",
-        },
-    )
+    client.post("/internal/events", json=make_payload(event_id="gas-report-start", sensor_id="gas", value=601))
 
     response = client.get("/api/alerts/1/report")
 
     assert response.status_code == 200
-    checklist_status = response.json()["report"]["checklist_status"]
-    assert checklist_status["total"] == 3
-    assert checklist_status["completed"] == 3
-    assert checklist_status["missing"] == []
+    report = response.json()["report"]
+    assert report["response_review"]["status"] == "not_started"
+    assert report["operator_note"] == ""
+    assert report["operator_evidence"] == ""
+    assert [item["id"] for item in report["missed_actions"]] == ["evacuate", "ventilate", "inspect_sensor"]
+    assert len(report["timeline"]) <= 5
 
 
 def test_alert_report_unknown_alert_returns_404(tmp_path):

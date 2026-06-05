@@ -17,9 +17,16 @@ export type IncidentCopy = {
   readonly evidence: string;
   readonly acknowledge: string;
   readonly saving: string;
+  readonly drillTitle: string;
+  readonly completedActions: string;
+  readonly missedActions: string;
+  readonly nextBestAction: string;
+  readonly scoreLabel: string;
+  readonly notStarted: string;
+  readonly partialResponse: string;
+  readonly responseComplete: string;
   readonly replayTimeline: string;
   readonly reportTitle: string;
-  readonly nextAction: string;
   readonly checklistComplete: string;
   readonly timelineEvents: string;
 };
@@ -129,9 +136,16 @@ export const copyByLanguage = {
       evidence: 'Evidence',
       acknowledge: 'Acknowledge with evidence',
       saving: 'Saving...',
+      drillTitle: 'Incident drill',
+      completedActions: 'Completed actions',
+      missedActions: 'Missed actions',
+      nextBestAction: 'Next best action',
+      scoreLabel: 'Score',
+      notStarted: 'Not started',
+      partialResponse: 'Partial response',
+      responseComplete: 'Response complete',
       replayTimeline: 'Replay timeline',
-      reportTitle: 'Incident report',
-      nextAction: 'Next action',
+      reportTitle: 'Incident command report',
       checklistComplete: 'Checklist complete',
       timelineEvents: 'Timeline events'
     } satisfies IncidentCopy,
@@ -265,9 +279,16 @@ export const copyByLanguage = {
       evidence: '증거',
       acknowledge: '증거와 함께 확인',
       saving: '저장 중...',
+      drillTitle: 'Incident 드릴',
+      completedActions: '완료한 조치',
+      missedActions: '놓친 조치',
+      nextBestAction: '다음 최선 조치',
+      scoreLabel: '점수',
+      notStarted: '시작 전',
+      partialResponse: '부분 대응',
+      responseComplete: '대응 완료',
       replayTimeline: '재생 타임라인',
-      reportTitle: 'Incident report',
-      nextAction: '다음 조치',
+      reportTitle: 'Incident command report',
       checklistComplete: '체크리스트 완료',
       timelineEvents: '타임라인 이벤트'
     } satisfies IncidentCopy,

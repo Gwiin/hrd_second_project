@@ -1278,6 +1278,7 @@ h1 {
 }
 
 .incident-guidance,
+.incident-review,
 .incident-report,
 .incident-form,
 .incident-replay {
@@ -1288,6 +1289,7 @@ h1 {
 }
 
 .incident-guidance strong,
+.incident-review strong,
 .incident-report strong,
 .incident-replay strong {
   color: #13283d;
@@ -1296,6 +1298,35 @@ h1 {
 
 .incident-report {
   background: rgba(63, 126, 232, 0.08);
+}
+
+.incident-review {
+  background: rgba(25, 169, 116, 0.1);
+}
+
+.incident-review div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.incident-review span,
+.incident-review small,
+.incident-review em,
+.incident-review li {
+  color: rgba(24, 39, 58, 0.72);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.incident-review em {
+  color: #147a57;
+}
+
+.incident-review ul {
+  margin: 0;
+  padding-left: 18px;
 }
 
 .incident-report div {
@@ -1332,6 +1363,33 @@ h1 {
 .incident-form label {
   display: grid;
   gap: 6px;
+}
+
+.incident-checklist {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.incident-checklist legend {
+  margin-bottom: 2px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.incident-checklist-item {
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
+}
+
+.incident-checklist-item input {
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  accent-color: #19a974;
 }
 
 .incident-form span {

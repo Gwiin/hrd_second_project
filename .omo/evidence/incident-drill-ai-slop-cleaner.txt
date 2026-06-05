@@ -1,0 +1,29 @@
+AI slop cleanup evidence for Incident Drill Mode.
+
+Scope audited:
+- apps/backend/incidents.py
+- apps/backend/db/sqlite_repository.py
+- apps/backend/main.py
+- frontend/src/IncidentResponsePanel.tsx
+- frontend/src/language.ts
+- frontend/src/App.css
+- tests/test_incidents.py
+- tests/test_backend.py
+- tests/test_frontend_auth_gate.py
+
+Baseline locked before cleanup:
+- .omo/evidence/incident-drill-full-pytest.txt
+- .omo/evidence/incident-drill-frontend-build.txt
+- .omo/evidence/incident-drill-diff-check.txt
+- .omo/evidence/task-1-review-complete-green.txt
+- .omo/evidence/incident-drill-complete-http-ack.txt
+- .omo/evidence/incident-drill-complete-http-replay.txt
+- .omo/evidence/incident-drill-complete-http-report.txt
+
+Search/audit:
+- rg for TODO, placeholder, dummy, fake, hack, magic, obvious, simply/just, AI/LLM/chatbot/prompt/OpenAI/API key/model selector.
+- Hits were existing LLM placeholder contract tests/copy outside the drill feature, existing CSS class names, and intentional regression data `fake_step` for unknown checklist rejection.
+
+Result:
+- No behavior-preserving slop cleanup applied.
+- No obvious comments, debug leftovers, speculative abstraction, duplicate drill logic, or untested new behavior found in the changed drill implementation.

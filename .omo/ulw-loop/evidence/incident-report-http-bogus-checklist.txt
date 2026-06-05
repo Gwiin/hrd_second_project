@@ -1,0 +1,24 @@
+Reviewer follow-up HTTP malformed checklist path
+HTTP/1.1 201 Created
+date: Fri, 05 Jun 2026 05:06:34 GMT
+server: uvicorn
+content-length: 55
+content-type: application/json
+
+{"accepted":true,"event_id":"ulw-report-gas-bogus-001"}
+--- ACK WITH UNKNOWN CHECKLIST ITEM ---
+HTTP/1.1 200 OK
+date: Fri, 05 Jun 2026 05:06:34 GMT
+server: uvicorn
+content-length: 516
+content-type: application/json
+
+{"alert":{"alert_id":1,"level":"critical","code":"gas.critical","message":"Critical gas reading from pico-safe-001: 601.0 ppm","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"gas","value":601.0,"status":"acknowledged","created_at":"2026-06-05T05:06:34.446556+00:00","resolved_at":"2026-06-05T05:06:34.458677+00:00"},"response":{"checklist":["evacuate","ventilate","inspect_sensor","bogus"],"note":"Operator added a bogus checklist item.","evidence":"Unknown checklist id should not inflate completion."}}
+--- REPORT ---
+HTTP/1.1 200 OK
+date: Fri, 05 Jun 2026 05:06:34 GMT
+server: uvicorn
+content-length: 1637
+content-type: application/json
+
+{"report":{"report_id":"alert-1","incident":{"alert_id":1,"level":"critical","code":"gas.critical","message":"Critical gas reading from pico-safe-001: 601.0 ppm","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"gas","value":601.0,"status":"acknowledged","created_at":"2026-06-05T05:06:34.446556+00:00","resolved_at":"2026-06-05T05:06:34.458677+00:00"},"guidance_summary":"Critical gas level detected","recommended_action":"Evacuate, ventilate the room, and inspect the gas sensor before re-entry.","checklist_status":{"total":3,"completed":3,"missing":[]},"operator_response":{"checklist":["evacuate","ventilate","inspect_sensor","bogus"],"note":"Operator added a bogus checklist item.","evidence":"Unknown checklist id should not inflate completion."},"next_action":"monitor_until_clear","timeline_count":3,"related_events":[{"id":"reading-1","type":"reading","timestamp":"2026-06-05T05:06:34.446556+00:00","title":"gas reading","message":"pico-safe-001 gas: 601.0 ppm","tone":"safe","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"gas","value":601.0,"unit":"ppm","quality":"good","measured_at":"2026-06-05T09:40:00+09:00"},{"id":"alert-1","type":"alert","timestamp":"2026-06-05T05:06:34.446556+00:00","title":"gas.critical","message":"Critical gas reading from pico-safe-001: 601.0 ppm","tone":"critical","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"gas","value":601.0,"status":"acknowledged","resolved_at":"2026-06-05T05:06:34.458677+00:00"},{"id":"log-1","type":"log","timestamp":"2026-06-05T05:06:34.446556+00:00","title":"info","message":"Reading received from pico-safe-001","tone":"safe"}]}}
