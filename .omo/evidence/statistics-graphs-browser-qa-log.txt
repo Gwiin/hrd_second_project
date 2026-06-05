@@ -1,0 +1,3 @@
+dashboard LLM placeholder visible
+statistics environment graphs visible
+Korean environment graph copy visible

@@ -1,0 +1,2 @@
+mobile dashboard placeholder visible
+mobile overflow {"scrollWidth":390,"clientWidth":390,"bodyScrollWidth":390,"bodyClientWidth":390}

@@ -61,6 +61,9 @@ type TimelineEntry = {
   zone_id?: string | null;
   device_id?: string | null;
   sensor_id?: string | null;
+  value?: number | boolean;
+  unit?: string;
+  measured_at?: string;
   process?: string;
   status?: string;
   quality?: string;
@@ -94,6 +97,7 @@ type ActiveView = 'dashboard' | 'statistics';
 type AuthMode = 'signin' | 'signup';
 type AuthProvider = 'google' | 'kakao';
 type AuthErrorKey = 'signupError' | 'signinError';
+type EnvironmentSensorId = 'temperature' | 'humidity' | 'light' | 'motion' | 'gas';
 
 type User = {
   user_id: number;
@@ -208,6 +212,14 @@ const fallbackLiveness: Liveness = {
   ]
 };
 
+const environmentSensors: readonly { id: EnvironmentSensorId; max: number }[] = [
+  { id: 'temperature', max: 80 },
+  { id: 'humidity', max: 100 },
+  { id: 'light', max: 1024 },
+  { id: 'gas', max: 1000 },
+  { id: 'motion', max: 1 }
+];
+
 function formatTime(value: string | null): string {
   if (!value) return '--:--:--';
   return new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -264,6 +276,30 @@ function formatQualityLabel(quality: string, labels: Record<QualityLabelKey, str
 function formatStatValue(value: number | boolean): string {
   if (typeof value === 'boolean') return value ? 'true' : 'false';
   return Number.isInteger(value) ? value.toString() : value.toFixed(1);
+}
+
+function readingValue(reading: Reading | TimelineEntry | undefined): number | null {
+  if (!reading || reading.value === undefined) return null;
+  if (typeof reading.value === 'boolean') return reading.value ? 1 : 0;
+  return Number.isFinite(reading.value) ? reading.value : null;
+}
+
+function meterWidth(reading: Reading | undefined, max: number): string {
+  const value = readingValue(reading);
+  if (value === null) return '0%';
+  return `${Math.max(4, Math.min(100, (value / max) * 100)).toFixed(0)}%`;
+}
+
+function renderTrendPath(values: readonly number[], width = 240, height = 72): string {
+  if (values.length < 2) return '';
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  return values.map((value, index) => {
+    const x = (index / (values.length - 1)) * width;
+    const y = height - ((value - min) / span) * (height - 10) - 5;
+    return `${index === 0 ? 'M' : 'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+  }).join(' ');
 }
 
 export default function App() {
@@ -325,7 +361,7 @@ export default function App() {
         fetch('/api/readings/latest'),
         fetch('/api/logs'),
         fetch('/api/alerts'),
-        fetch('/api/timeline?limit=12'),
+        fetch('/api/timeline?limit=30'),
         fetch('/api/liveness'),
         fetch('/api/stats')
       ]);
@@ -491,6 +527,107 @@ export default function App() {
     );
   }
 
+  function renderEnvironmentOverview() {
+    const readingEvents = timeline
+      .filter((entry) => entry.type === 'reading' && entry.sensor_id && environmentSensors.some((sensor) => sensor.id === entry.sensor_id))
+      .slice(0, 24);
+
+    return (
+      <section className="environment-section">
+        <section className="panel environment-panel">
+          <div className="panel-title">
+            <div>
+              <h2>{copy.stats.environmentByRoom}</h2>
+              <span>{copy.stats.environmentByRoomBody}</span>
+            </div>
+          </div>
+          <div className="environment-rooms">
+            {devices.map((device) => (
+              <article className="environment-room" key={device.device_id}>
+                <header>
+                  <strong>{device.zone_id.replace('-', ' ')}</strong>
+                  <span>{device.device_id}</span>
+                </header>
+                <div className="environment-meters">
+                  {environmentSensors.map((sensor) => {
+                    const reading = readings[device.device_id]?.[sensor.id];
+                    return (
+                      <div className="environment-meter" key={sensor.id}>
+                        <span>{copy.sensors[sensor.id]}</span>
+                        <div className="meter-track" aria-hidden="true">
+                          <i style={{ width: meterWidth(reading, sensor.max) }} />
+                        </div>
+                        <strong>{reading ? formatReading(reading, sensor.id, copy.app.motion, copy.app.noMotion) : copy.stats.noRoomData}</strong>
+                      </div>
+                    );
+                  })}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="panel environment-panel trend-panel">
+          <div className="panel-title">
+            <div>
+              <h2>{copy.stats.recentEnvironmentTrend}</h2>
+              <span>{copy.stats.recentEnvironmentTrendBody}</span>
+            </div>
+          </div>
+          <div className="trend-grid">
+            {environmentSensors.map((sensor) => {
+              const values = readingEvents
+                .filter((entry) => entry.sensor_id === sensor.id)
+                .map((entry) => readingValue(entry))
+                .filter((value): value is number => value !== null)
+                .reverse();
+              const path = renderTrendPath(values);
+              return (
+                <article className="trend-card" key={sensor.id}>
+                  <header>
+                    <strong>{copy.sensors[sensor.id]}</strong>
+                    <span>{values.length} pts</span>
+                  </header>
+                  {path ? (
+                    <svg viewBox="0 0 240 72" aria-hidden="true">
+                      <path d={path} />
+                    </svg>
+                  ) : (
+                    <p>{copy.stats.noRecentTrend}</p>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      </section>
+    );
+  }
+
+  function renderLlmPlaceholder() {
+    return (
+      <section className="panel llm-placeholder">
+        <div className="panel-title">
+          <h2>{copy.app.llmPreviewTitle}</h2>
+          <span>{copy.app.llmPreviewBadge}</span>
+        </div>
+        <div className="placeholder-messages">
+          <p>{copy.app.llmPreviewBody}</p>
+          <small>{stats?.llm_context.headline ?? copy.stats.loadingBody}</small>
+        </div>
+        <div className="placeholder-chat-bar">
+          <input
+            className="placeholder-chat-input"
+            disabled
+            placeholder={copy.app.llmPreviewPrompt}
+            readOnly
+          />
+          <button disabled type="button">{copy.app.llmPreviewSend}</button>
+        </div>
+      </section>
+    );
+  }
+
   function renderStatisticsView() {
     if (statsError) {
       return (
@@ -541,6 +678,8 @@ export default function App() {
             </article>
           ))}
         </section>
+
+        {renderEnvironmentOverview()}
 
         <section className="panel stats-panel">
           <div className="panel-title">
@@ -736,6 +875,8 @@ export default function App() {
                     ))}
                   </div>
                 </section>
+
+                {renderLlmPlaceholder()}
               </section>
 
               <aside className="right-rail">

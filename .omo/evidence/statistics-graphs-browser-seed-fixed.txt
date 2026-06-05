@@ -1,0 +1,64 @@
+HTTP/1.1 201 Created
+date: Fri, 05 Jun 2026 01:12:55 GMT
+server: uvicorn
+content-length: 47
+content-type: application/json
+
+{"accepted":true,"event_id":"graph-r1-temp-1b"}
+---
+HTTP/1.1 201 Created
+date: Fri, 05 Jun 2026 01:12:55 GMT
+server: uvicorn
+content-length: 47
+content-type: application/json
+
+{"accepted":true,"event_id":"graph-r1-temp-2b"}
+---
+HTTP/1.1 201 Created
+date: Fri, 05 Jun 2026 01:12:55 GMT
+server: uvicorn
+content-length: 50
+content-type: application/json
+
+{"accepted":true,"event_id":"graph-r1-humidity-b"}
+---
+HTTP/1.1 201 Created
+date: Fri, 05 Jun 2026 01:12:55 GMT
+server: uvicorn
+content-length: 45
+content-type: application/json
+
+{"accepted":true,"event_id":"graph-r1-gas-b"}
+---
+HTTP/1.1 201 Created
+date: Fri, 05 Jun 2026 01:12:55 GMT
+server: uvicorn
+content-length: 47
+content-type: application/json
+
+{"accepted":true,"event_id":"graph-r2-temp-1b"}
+---
+HTTP/1.1 201 Created
+date: Fri, 05 Jun 2026 01:12:55 GMT
+server: uvicorn
+content-length: 47
+content-type: application/json
+
+{"accepted":true,"event_id":"graph-r2-temp-2b"}
+---
+HTTP/1.1 201 Created
+date: Fri, 05 Jun 2026 01:12:55 GMT
+server: uvicorn
+content-length: 47
+content-type: application/json
+
+{"accepted":true,"event_id":"graph-r2-light-b"}
+---
+HTTP/1.1 201 Created
+date: Fri, 05 Jun 2026 01:12:55 GMT
+server: uvicorn
+content-length: 48
+content-type: application/json
+
+{"accepted":true,"event_id":"graph-r2-motion-b"}
+---

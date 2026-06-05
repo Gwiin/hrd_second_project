@@ -107,6 +107,31 @@ def test_dashboard_has_korean_statistics_copy():
     assert "총 센서값" in app
 
 
+def test_statistics_page_has_environment_graphs():
+    app = frontend_source()
+
+    assert "environmentSensors" in app
+    assert "renderEnvironmentOverview" in app
+    assert "renderTrendPath" in app
+    assert "Environment by room" in app
+    assert "Recent environment trend" in app
+    assert "방별 환경" in app
+    assert "최근 환경 추이" in app
+
+
+def test_dashboard_has_llm_placeholder_without_real_chat_integration():
+    app = frontend_source()
+
+    assert "renderLlmPlaceholder" in app
+    assert "LLM assistant preview" in app
+    assert "통계 기반 LLM 상담 준비 중" in app
+    assert "placeholder-chat-input" in app
+    assert "/api/chat" not in app
+    assert "OPENAI" not in app
+    assert "api key" not in app.lower()
+    assert "model selector" not in app.lower()
+
+
 def test_dashboard_has_english_korean_language_toggle():
     app = frontend_source()
 

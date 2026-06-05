@@ -1,0 +1,64 @@
+HTTP/1.1 422 Unprocessable Content
+date: Fri, 05 Jun 2026 01:12:33 GMT
+server: uvicorn
+content-length: 372
+content-type: application/json
+
+{"error":{"code":"VALIDATION_ERROR","message":"Invalid request payload","details":[{"type":"missing","loc":["body","protocol"],"msg":"Field required","input":{"event_id":"graph-r1-temp-1","site_id":"safe-home","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"temperature","value":22,"unit":"celsius","quality":"good","timestamp":"2026-06-05T09:00:00+09:00"}}]}}
+---
+HTTP/1.1 422 Unprocessable Content
+date: Fri, 05 Jun 2026 01:12:33 GMT
+server: uvicorn
+content-length: 372
+content-type: application/json
+
+{"error":{"code":"VALIDATION_ERROR","message":"Invalid request payload","details":[{"type":"missing","loc":["body","protocol"],"msg":"Field required","input":{"event_id":"graph-r1-temp-2","site_id":"safe-home","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"temperature","value":25,"unit":"celsius","quality":"good","timestamp":"2026-06-05T09:01:00+09:00"}}]}}
+---
+HTTP/1.1 422 Unprocessable Content
+date: Fri, 05 Jun 2026 01:12:33 GMT
+server: uvicorn
+content-length: 371
+content-type: application/json
+
+{"error":{"code":"VALIDATION_ERROR","message":"Invalid request payload","details":[{"type":"missing","loc":["body","protocol"],"msg":"Field required","input":{"event_id":"graph-r1-humidity","site_id":"safe-home","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"humidity","value":48,"unit":"percent","quality":"good","timestamp":"2026-06-05T09:02:00+09:00"}}]}}
+---
+HTTP/1.1 422 Unprocessable Content
+date: Fri, 05 Jun 2026 01:12:33 GMT
+server: uvicorn
+content-length: 358
+content-type: application/json
+
+{"error":{"code":"VALIDATION_ERROR","message":"Invalid request payload","details":[{"type":"missing","loc":["body","protocol"],"msg":"Field required","input":{"event_id":"graph-r1-gas","site_id":"safe-home","zone_id":"room-1","device_id":"pico-safe-001","sensor_id":"gas","value":180,"unit":"ppm","quality":"good","timestamp":"2026-06-05T09:03:00+09:00"}}]}}
+---
+HTTP/1.1 422 Unprocessable Content
+date: Fri, 05 Jun 2026 01:12:33 GMT
+server: uvicorn
+content-length: 372
+content-type: application/json
+
+{"error":{"code":"VALIDATION_ERROR","message":"Invalid request payload","details":[{"type":"missing","loc":["body","protocol"],"msg":"Field required","input":{"event_id":"graph-r2-temp-1","site_id":"safe-home","zone_id":"room-2","device_id":"pico-safe-002","sensor_id":"temperature","value":20,"unit":"celsius","quality":"good","timestamp":"2026-06-05T09:04:00+09:00"}}]}}
+---
+HTTP/1.1 422 Unprocessable Content
+date: Fri, 05 Jun 2026 01:12:33 GMT
+server: uvicorn
+content-length: 372
+content-type: application/json
+
+{"error":{"code":"VALIDATION_ERROR","message":"Invalid request payload","details":[{"type":"missing","loc":["body","protocol"],"msg":"Field required","input":{"event_id":"graph-r2-temp-2","site_id":"safe-home","zone_id":"room-2","device_id":"pico-safe-002","sensor_id":"temperature","value":27,"unit":"celsius","quality":"good","timestamp":"2026-06-05T09:05:00+09:00"}}]}}
+---
+HTTP/1.1 422 Unprocessable Content
+date: Fri, 05 Jun 2026 01:12:33 GMT
+server: uvicorn
+content-length: 362
+content-type: application/json
+
+{"error":{"code":"VALIDATION_ERROR","message":"Invalid request payload","details":[{"type":"missing","loc":["body","protocol"],"msg":"Field required","input":{"event_id":"graph-r2-light","site_id":"safe-home","zone_id":"room-2","device_id":"pico-safe-002","sensor_id":"light","value":720,"unit":"lux","quality":"good","timestamp":"2026-06-05T09:06:00+09:00"}}]}}
+---
+HTTP/1.1 422 Unprocessable Content
+date: Fri, 05 Jun 2026 01:12:33 GMT
+server: uvicorn
+content-length: 369
+content-type: application/json
+
+{"error":{"code":"VALIDATION_ERROR","message":"Invalid request payload","details":[{"type":"missing","loc":["body","protocol"],"msg":"Field required","input":{"event_id":"graph-r2-motion","site_id":"safe-home","zone_id":"room-2","device_id":"pico-safe-002","sensor_id":"motion","value":true,"unit":"boolean","quality":"good","timestamp":"2026-06-05T09:07:00+09:00"}}]}}
+---

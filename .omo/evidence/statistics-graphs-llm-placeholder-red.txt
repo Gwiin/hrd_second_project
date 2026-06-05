@@ -1,0 +1,24 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_________________ test_statistics_page_has_environment_graphs __________________
+
+    def test_statistics_page_has_environment_graphs():
+        app = frontend_source()
+    
+>       assert "environmentSensors" in app
+E       assert 'environmentSensors' in "import { useEffect, useState, type FormEvent } from 'react';\nimport { IncidentResponsePanel } from './IncidentRespon...는 계속 사용할 수 있습니다.',\n      llmContext: '향후 LLM용 요약',\n      llmContextPreview: 'LLM 분석 컨텍스트'\n    }\n  }\n} as const;\n"
+
+tests/test_frontend_auth_gate.py:113: AssertionError
+_______ test_dashboard_has_llm_placeholder_without_real_chat_integration _______
+
+    def test_dashboard_has_llm_placeholder_without_real_chat_integration():
+        app = frontend_source()
+    
+>       assert "renderLlmPlaceholder" in app
+E       assert 'renderLlmPlaceholder' in "import { useEffect, useState, type FormEvent } from 'react';\nimport { IncidentResponsePanel } from './IncidentRespon...는 계속 사용할 수 있습니다.',\n      llmContext: '향후 LLM용 요약',\n      llmContextPreview: 'LLM 분석 컨텍스트'\n    }\n  }\n} as const;\n"
+
+tests/test_frontend_auth_gate.py:125: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_frontend_auth_gate.py::test_statistics_page_has_environment_graphs
+FAILED tests/test_frontend_auth_gate.py::test_dashboard_has_llm_placeholder_without_real_chat_integration
+2 failed, 17 deselected in 0.05s

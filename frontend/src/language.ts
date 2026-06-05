@@ -1,5 +1,5 @@
 export type Language = 'en' | 'ko';
-export type SensorId = 'temperature' | 'humidity' | 'light' | 'motion';
+export type SensorId = 'temperature' | 'humidity' | 'light' | 'motion' | 'gas';
 export type StatusLabelKey = 'safe' | 'warning' | 'critical' | 'info' | 'online' | 'offline' | 'connecting' | 'simulated' | 'degraded' | 'open' | 'acknowledged' | 'reconnecting' | 'live';
 export type QualityLabelKey = 'good' | 'uncertain' | 'bad' | 'stale' | 'missing';
 
@@ -29,7 +29,7 @@ export const languageOptions: readonly { readonly id: Language; readonly label: 
   { id: 'ko', label: '한국어' }
 ];
 
-export const sensorIds: readonly SensorId[] = ['temperature', 'humidity', 'light', 'motion'];
+export const sensorIds: readonly SensorId[] = ['temperature', 'humidity', 'light', 'motion', 'gas'];
 
 export const copyByLanguage = {
   en: {
@@ -63,13 +63,19 @@ export const copyByLanguage = {
       views: 'Views',
       dashboard: 'Dashboard',
       motion: 'Motion',
-      noMotion: 'No Motion'
+      noMotion: 'No Motion',
+      llmPreviewTitle: 'LLM assistant preview',
+      llmPreviewBadge: 'Prepared from statistics',
+      llmPreviewBody: 'Statistics-based assistance will appear here after the LLM connection is added.',
+      llmPreviewPrompt: 'Ask about safety trends, stale sensors, or room conditions',
+      llmPreviewSend: 'Ready soon'
     },
     sensors: {
       temperature: 'Temperature',
       humidity: 'Humidity',
       light: 'Light',
-      motion: 'Motion'
+      motion: 'Motion',
+      gas: 'Gas'
     },
     statusLabels: {
       safe: 'Safe',
@@ -153,7 +159,13 @@ export const copyByLanguage = {
       errorTitle: 'Statistics unavailable',
       errorBody: 'The dashboard is still usable while statistics reconnect.',
       llmContext: 'Future LLM-ready summary',
-      llmContextPreview: 'LLM context preview'
+      llmContextPreview: 'LLM context preview',
+      environmentByRoom: 'Environment by room',
+      environmentByRoomBody: 'Latest environment values from each room.',
+      recentEnvironmentTrend: 'Recent environment trend',
+      recentEnvironmentTrendBody: 'Recent reading events from the blackbox timeline.',
+      noRoomData: 'No latest reading',
+      noRecentTrend: 'Not enough recent sensor history yet.'
     }
   },
   ko: {
@@ -187,13 +199,19 @@ export const copyByLanguage = {
       views: '보기',
       dashboard: '대시보드',
       motion: '움직임',
-      noMotion: '움직임 없음'
+      noMotion: '움직임 없음',
+      llmPreviewTitle: '통계 기반 LLM 상담 준비 중',
+      llmPreviewBadge: '통계 컨텍스트 준비됨',
+      llmPreviewBody: 'LLM 연결이 추가되면 이 영역에서 안전 추이와 방별 상태를 질문할 수 있습니다.',
+      llmPreviewPrompt: '안전 추이, 오래된 센서, 방 상태를 질문할 수 있습니다',
+      llmPreviewSend: '준비 중'
     },
     sensors: {
       temperature: '온도',
       humidity: '습도',
       light: '조도',
-      motion: '움직임'
+      motion: '움직임',
+      gas: '가스'
     },
     statusLabels: {
       safe: '안전',
@@ -277,7 +295,13 @@ export const copyByLanguage = {
       errorTitle: '통계를 사용할 수 없습니다',
       errorBody: '통계가 재연결되는 동안 대시보드는 계속 사용할 수 있습니다.',
       llmContext: '향후 LLM용 요약',
-      llmContextPreview: 'LLM 분석 컨텍스트'
+      llmContextPreview: 'LLM 분석 컨텍스트',
+      environmentByRoom: '방별 환경',
+      environmentByRoomBody: '각 방에서 마지막으로 수집된 환경 값입니다.',
+      recentEnvironmentTrend: '최근 환경 추이',
+      recentEnvironmentTrendBody: '블랙박스 타임라인의 최근 센서 이벤트입니다.',
+      noRoomData: '최근 센서값 없음',
+      noRecentTrend: '최근 센서 이력이 아직 부족합니다.'
     }
   }
 } as const;
