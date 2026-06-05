@@ -1,40 +1,33 @@
-# Pico SafeRoom Active Goal Plan
+# Pico SafeRoom Technical Spec Artifact Plan
 
 ## Target outcome
-- Support email/password signup and login.
-- Support Google and Kakao social login.
-- Keep the login UI visually consistent with the dashboard.
-- Run the system through either pywebview or a normal browser.
-- Default runtime uses real Pico 2W boards through MQTT; the simulator remains separate.
-- Identify a clear differentiation direction for the project beyond a generic IoT dashboard.
+- Create a current-project technical specification based on the example project spec structure.
+- Include project-specific flowchart, system architecture, and DB schema images.
+- Keep existing project docs untouched unless directly referenced.
 
-## Current evidence
-- `ff0ef3e` on `main` added the auth backend, social OAuth callback flow, blurred auth gate, real-board launcher default, and setup docs.
-- `apps.desktop.app` defaults to pywebview and supports `--open browser`.
-- `apps.desktop.app` starts `apps.collector.mqtt_client` by default, not the simulator collector.
-- `SETUP.md` and `SETUP.ko.md` document OAuth environment variables, desktop/browser launch, and separate simulator execution.
-- Local rendered QA verified signup, visible sign-out, post-logout auth gate, and mobile auth layout. The WebSocket 404 found during QA was traced to a missing runtime dependency and fixed by adding `websockets`.
+## Success criteria
+- Technical spec covers project name, period, roles, goals, stack, detailed implementation, diagrams, core code, flowchart, and references.
+- Diagrams are stored as reusable image files and linked from the spec.
+- Claims are grounded in inspected project files such as `README.ko.md`, `apps/backend/main.py`, `apps/backend/db/sqlite_repository.py`, `apps/collector/mqtt_parser.py`, and schema files.
+- Generated files pass basic Markdown/link/XML validation.
+
+## Relevant files
+- `doc/project_technical_spec_2026-06-05.md`
+- `doc/assets/saferoom_flowchart.svg`
+- `doc/assets/saferoom_system_architecture.svg`
+- `doc/assets/saferoom_db_schema.svg`
 
 ## Implementation checklist
-- [x] Email/password signup, login, session cookie, and logout backend.
-- [x] Google and Kakao OAuth start and callback exchange paths.
-- [x] Blurred pre-login dashboard with auth card.
-- [x] Real Pico 2W MQTT collector as the launcher default.
-- [x] Browser launch mode through `apps.desktop.app --open browser`.
-- [x] Simulator documented as a separate development/test command.
-- [x] Dashboard-visible logout action.
-- [x] WebSocket runtime dependency included for Uvicorn browser runs.
-- [x] Favicon route added to avoid browser resource 404 noise.
-- [x] Differentiation direction selected and translated into Incident Replay + Guided Response UI, API, docs, and buildable feature plan.
-- [ ] Live OAuth provider credentials registered and tested outside mocked callback tests.
-- [ ] Real four-board sensor bring-up verified with MQTT messages from hardware.
+- [x] Inspect example PDF structure.
+- [x] Inspect current project docs and code.
+- [x] Write current-project technical spec.
+- [x] Create three SVG diagram images.
+- [x] Validate generated Markdown links and SVG XML.
 
 ## Validation checks
-- `.venv/bin/python -m pytest -v`
-- `npm --prefix frontend run build`
-- `git diff --check`
-- Rendered auth/dashboard smoke test in browser or Playwright when UI changes.
+- `python3` XML parse for generated SVGs.
+- `python3` Markdown asset link check.
+- `git diff --check`.
 
-## Open blockers
-- Live Google/Kakao OAuth verification requires real provider console credentials and registered redirect URLs.
-- Real hardware bring-up requires the four Pico 2W boards, sensors, Wi-Fi settings, and MQTT broker reachable from the devices.
+## Blockers
+- None.

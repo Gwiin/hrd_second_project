@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1260" height="1020" viewBox="0 0 1260 1020" role="img" aria-labelledby="title desc">
+  <title id="title">Pico SafeRoom operating flowchart</title>
+  <desc id="desc">Sensor readings flow from Pico devices to MQTT, collector, backend validation, database storage, alert decision, dashboard update, and incident response.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#263238"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .node { fill: #ffffff; stroke: #30495b; stroke-width: 2.4; rx: 15; }
+      .start { fill: #eaf8ef; stroke: #198754; }
+      .decision { fill: #fff7df; stroke: #c87900; }
+      .alert { fill: #fff1f1; stroke: #c73636; }
+      .ui { fill: #eef5ff; stroke: #3167b1; }
+      .title { font: 700 30px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #1d2b34; }
+      .h { font: 700 18px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #1d2b34; text-anchor: middle; }
+      .s { font: 500 13px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #53636f; text-anchor: middle; }
+      .label { font: 700 13px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #44545f; }
+      .edge { fill: none; stroke: #263238; stroke-width: 2.5; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect class="bg" width="1260" height="1020"/>
+  <text x="60" y="64" class="title">Pico SafeRoom 전체 플로우차트</text>
+
+  <rect x="470" y="105" width="320" height="76" class="node start"/>
+  <text x="630" y="137" class="h">Pico 2W 센서 읽기</text>
+  <text x="630" y="160" class="s">temperature, humidity, light, motion, gas</text>
+
+  <rect x="470" y="225" width="320" height="76" class="node"/>
+  <text x="630" y="257" class="h">MQTT 메시지 발행</text>
+  <text x="630" y="280" class="s">reading topic 또는 status topic</text>
+
+  <rect x="470" y="345" width="320" height="76" class="node"/>
+  <text x="630" y="377" class="h">Collector 수신 및 파싱</text>
+  <text x="630" y="400" class="s">topic/payload 일치 여부 확인</text>
+
+  <polygon points="630,465 800,545 630,625 460,545" class="node decision"/>
+  <text x="630" y="536" class="h">payload 유효?</text>
+  <text x="630" y="560" class="s">Pydantic SensorEvent 검증</text>
+
+  <rect x="832" y="507" width="286" height="76" class="node alert"/>
+  <text x="975" y="539" class="h">거부 및 warning log</text>
+  <text x="975" y="562" class="s">422 VALIDATION_ERROR</text>
+
+  <rect x="470" y="675" width="320" height="76" class="node"/>
+  <text x="630" y="707" class="h">Backend 저장</text>
+  <text x="630" y="730" class="s">SQLite sensor_readings / system_logs</text>
+
+  <polygon points="630,795 800,875 630,955 460,875" class="node decision"/>
+  <text x="630" y="866" class="h">위험 조건?</text>
+  <text x="630" y="890" class="s">gas >= 300/600, temp >= 45/60</text>
+
+  <rect x="112" y="837" width="300" height="76" class="node alert"/>
+  <text x="262" y="869" class="h">alert 생성</text>
+  <text x="262" y="892" class="s">alerts 테이블에 open 상태 저장</text>
+
+  <rect x="850" y="837" width="300" height="76" class="node ui"/>
+  <text x="1000" y="869" class="h">Dashboard 갱신</text>
+  <text x="1000" y="892" class="s">REST polling + WebSocket reading.created</text>
+
+  <rect x="112" y="700" width="300" height="76" class="node ui"/>
+  <text x="262" y="732" class="h">Incident Replay</text>
+  <text x="262" y="755" class="s">관련 이벤트와 대응 가이드 조회</text>
+
+  <rect x="112" y="560" width="300" height="76" class="node start"/>
+  <text x="262" y="592" class="h">운영자 확인 처리</text>
+  <text x="262" y="615" class="s">checklist, note, evidence 저장</text>
+
+  <path class="edge" d="M630 181 L630 225"/>
+  <path class="edge" d="M630 301 L630 345"/>
+  <path class="edge" d="M630 421 L630 465"/>
+  <path class="edge" d="M800 545 L832 545"/>
+  <text x="810" y="532" class="label">No</text>
+  <path class="edge" d="M630 625 L630 675"/>
+  <text x="646" y="655" class="label">Yes</text>
+  <path class="edge" d="M630 751 L630 795"/>
+  <path class="edge" d="M460 875 L412 875"/>
+  <text x="428" y="862" class="label">Yes</text>
+  <path class="edge" d="M800 875 L850 875"/>
+  <text x="818" y="862" class="label">No/After save</text>
+  <path class="edge" d="M262 837 L262 776"/>
+  <path class="edge" d="M262 700 L262 636"/>
+  <path class="edge" d="M412 598 C565 596 714 723 850 850"/>
+</svg>

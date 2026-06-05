@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1040" viewBox="0 0 1500 1040" role="img" aria-labelledby="title desc">
+  <title id="title">Pico SafeRoom SQLite DB schema</title>
+  <desc id="desc">SQLite schema with devices, sensors, sensor_readings, alerts, incident_responses, process_heartbeats, users, auth_accounts, and auth_sessions.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#314454"/>
+    </marker>
+    <style>
+      .bg { fill: #f7f9fc; }
+      .table { fill: #ffffff; stroke: #314454; stroke-width: 2.2; rx: 12; }
+      .head { fill: #e9f1f7; }
+      .auth .head { fill: #f3ecff; }
+      .event .head { fill: #eaf8ef; }
+      .alert .head { fill: #fff0f0; }
+      .title { font: 700 30px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #1d2b34; }
+      .name { font: 700 18px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #1d2b34; }
+      .col { font: 500 13px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #2f3d47; }
+      .key { font-weight: 700; fill: #0f6f43; }
+      .note { font: 500 14px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #53636f; }
+      .rel { fill: none; stroke: #314454; stroke-width: 2.2; marker-end: url(#arrow); }
+      .dash { fill: none; stroke: #7a8790; stroke-width: 2; stroke-dasharray: 7 7; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect class="bg" width="1500" height="1040"/>
+  <text x="58" y="64" class="title">Pico SafeRoom DB 스키마</text>
+  <text x="58" y="94" class="note">근거: `apps/backend/db/sqlite_repository.py`의 SQLite 초기화 스크립트</text>
+
+  <g class="table event" transform="translate(70 145)">
+    <rect width="300" height="190" class="table"/>
+    <rect width="300" height="42" class="head" rx="12"/>
+    <text x="20" y="27" class="name">devices</text>
+    <text x="20" y="66" class="col key">PK device_id</text>
+    <text x="20" y="88" class="col">zone_id, device_name, model</text>
+    <text x="20" y="110" class="col">status, protocol, enabled</text>
+    <text x="20" y="132" class="col">last_seen_at</text>
+    <text x="20" y="164" class="col">4대 Pico 2W 기본 등록</text>
+  </g>
+
+  <g class="table event" transform="translate(470 145)">
+    <rect width="310" height="160" class="table"/>
+    <rect width="310" height="42" class="head" rx="12"/>
+    <text x="20" y="27" class="name">sensors</text>
+    <text x="20" y="66" class="col key">PK device_id + sensor_id</text>
+    <text x="20" y="88" class="col">sensor_name, unit</text>
+    <text x="20" y="120" class="col">수신된 센서 metadata 등록</text>
+  </g>
+
+  <g class="table event" transform="translate(470 385)">
+    <rect width="350" height="250" class="table"/>
+    <rect width="350" height="42" class="head" rx="12"/>
+    <text x="20" y="27" class="name">sensor_readings</text>
+    <text x="20" y="66" class="col key">PK reading_id</text>
+    <text x="20" y="88" class="col key">UNIQUE event_id</text>
+    <text x="20" y="110" class="col">site_id, zone_id, device_id, sensor_id</text>
+    <text x="20" y="132" class="col">protocol, value, unit, quality</text>
+    <text x="20" y="154" class="col">measured_at, received_at</text>
+    <text x="20" y="176" class="col">payload_json</text>
+    <text x="20" y="214" class="col">센서 측정 이력과 원본 정규화 payload</text>
+  </g>
+
+  <g class="table alert" transform="translate(930 385)">
+    <rect width="330" height="230" class="table"/>
+    <rect width="330" height="42" class="head" rx="12"/>
+    <text x="20" y="27" class="name">alerts</text>
+    <text x="20" y="66" class="col key">PK alert_id</text>
+    <text x="20" y="88" class="col">level, code, message</text>
+    <text x="20" y="110" class="col">zone_id, device_id, sensor_id</text>
+    <text x="20" y="132" class="col">value, status</text>
+    <text x="20" y="154" class="col">created_at, resolved_at</text>
+    <text x="20" y="194" class="col">warning/critical incident 기록</text>
+  </g>
+
+  <g class="table alert" transform="translate(930 690)">
+    <rect width="330" height="184" class="table"/>
+    <rect width="330" height="42" class="head" rx="12"/>
+    <text x="20" y="27" class="name">incident_responses</text>
+    <text x="20" y="66" class="col key">PK/FK alert_id</text>
+    <text x="20" y="88" class="col">checklist_json</text>
+    <text x="20" y="110" class="col">note, evidence</text>
+    <text x="20" y="132" class="col">created_at, updated_at</text>
+    <text x="20" y="158" class="col">운영자 대응 기록</text>
+  </g>
+
+  <g class="table" transform="translate(70 405)">
+    <rect width="300" height="150" class="table"/>
+    <rect width="300" height="42" class="head" rx="12"/>
+    <text x="20" y="27" class="name">system_logs</text>
+    <text x="20" y="66" class="col key">PK log_id</text>
+    <text x="20" y="88" class="col">timestamp, level, message</text>
+    <text x="20" y="120" class="col">수신/검증/시스템 이벤트 로그</text>
+  </g>
+
+  <g class="table" transform="translate(70 650)">
+    <rect width="300" height="155" class="table"/>
+    <rect width="300" height="42" class="head" rx="12"/>
+    <text x="20" y="27" class="name">process_heartbeats</text>
+    <text x="20" y="66" class="col key">PK process</text>
+    <text x="20" y="88" class="col">status, last_seen_at</text>
+    <text x="20" y="110" class="col">metadata_json</text>
+    <text x="20" y="134" class="col">backend/collector/worker 상태</text>
+  </g>
+
+  <g class="table auth" transform="translate(470 735)">
+    <rect width="320" height="185" class="table"/>
+    <rect width="320" height="42" class="head" rx="12"/>
+    <text x="20" y="27" class="name">users</text>
+    <text x="20" y="66" class="col key">PK user_id</text>
+    <text x="20" y="88" class="col key">UNIQUE email</text>
+    <text x="20" y="110" class="col">display_name, password_hash</text>
+    <text x="20" y="132" class="col">primary_provider, created_at</text>
+    <text x="20" y="160" class="col">email/social login 사용자</text>
+  </g>
+
+  <g class="table auth" transform="translate(930 120)">
+    <rect width="330" height="170" class="table"/>
+    <rect width="330" height="42" class="head" rx="12"/>
+    <text x="20" y="27" class="name">auth_accounts</text>
+    <text x="20" y="66" class="col key">PK provider + provider_subject</text>
+    <text x="20" y="88" class="col key">FK user_id</text>
+    <text x="20" y="110" class="col">email, linked_at</text>
+    <text x="20" y="140" class="col">Google/Kakao 계정 연결</text>
+  </g>
+
+  <g class="table auth" transform="translate(930 930)">
+    <rect width="330" height="95" class="table"/>
+    <rect width="330" height="34" class="head" rx="12"/>
+    <text x="20" y="23" class="name">auth_sessions</text>
+    <text x="20" y="56" class="col key">PK session_token, FK user_id</text>
+    <text x="20" y="78" class="col">created_at, expires_at</text>
+  </g>
+
+  <path class="rel" d="M370 240 L470 225"/>
+  <path class="rel" d="M625 305 L625 385"/>
+  <path class="dash" d="M820 510 L930 500"/>
+  <path class="rel" d="M1095 615 L1095 690"/>
+  <path class="rel" d="M790 825 C850 825 870 205 930 205"/>
+  <path class="rel" d="M790 855 C850 880 870 965 930 972"/>
+  <text x="835" y="486" class="note">threshold rule</text>
+  <text x="1115" y="660" class="note">ack/replay</text>
+</svg>

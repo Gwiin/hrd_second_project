@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820" role="img" aria-labelledby="title desc">
+  <title id="title">Pico SafeRoom system architecture</title>
+  <desc id="desc">Raspberry Pi Pico 2W devices publish sensor readings through MQTT. Collector normalizes data, FastAPI stores it in SQLite and broadcasts to the React dashboard inside pywebview.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#263238"/>
+    </marker>
+    <style>
+      .bg { fill: #f6f8fb; }
+      .band { fill: #e9f1f7; stroke: #b9cad8; stroke-width: 2; }
+      .box { fill: #ffffff; stroke: #385469; stroke-width: 2.4; rx: 14; }
+      .device { fill: #f0fff7; stroke: #198754; }
+      .broker { fill: #fff7e6; stroke: #c87900; }
+      .backend { fill: #eef5ff; stroke: #3167b1; }
+      .db { fill: #f5efff; stroke: #7655b7; }
+      .ui { fill: #fff0f4; stroke: #bd4162; }
+      .title { font: 700 30px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #1d2b34; }
+      .h { font: 700 20px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #1d2b34; }
+      .t { font: 500 15px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #2d3b45; }
+      .s { font: 500 13px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #55636d; }
+      .edge { fill: none; stroke: #263238; stroke-width: 2.5; marker-end: url(#arrow); }
+      .dash { fill: none; stroke: #687782; stroke-width: 2.2; stroke-dasharray: 7 7; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect class="bg" width="1400" height="820"/>
+  <text x="56" y="64" class="title">Pico SafeRoom 시스템 아키텍처</text>
+  <text x="56" y="94" class="t">Pico 2W 센서 노드에서 dashboard와 incident response까지 이어지는 로컬 IoT 관제 구조</text>
+
+  <rect x="42" y="135" width="292" height="600" class="band" rx="18"/>
+  <text x="68" y="175" class="h">Device Layer</text>
+  <rect x="78" y="210" width="220" height="74" class="box device"/>
+  <text x="102" y="241" class="h">Pico Safe 001</text>
+  <text x="102" y="263" class="s">room-1 / temperature, humidity...</text>
+  <rect x="78" y="310" width="220" height="74" class="box device"/>
+  <text x="102" y="341" class="h">Pico Safe 002</text>
+  <text x="102" y="363" class="s">room-2 / gas, light, motion</text>
+  <rect x="78" y="410" width="220" height="74" class="box device"/>
+  <text x="102" y="441" class="h">Pico Safe 003</text>
+  <text x="102" y="463" class="s">room-3 / heartbeat publish</text>
+  <rect x="78" y="510" width="220" height="74" class="box device"/>
+  <text x="102" y="541" class="h">Pico Safe 004</text>
+  <text x="102" y="563" class="s">room-4 / MicroPython firmware</text>
+
+  <rect x="390" y="210" width="214" height="96" class="box broker"/>
+  <text x="430" y="247" class="h">MQTT Broker</text>
+  <text x="424" y="271" class="s">saferoom/+/+/sensors/+/reading</text>
+  <text x="424" y="291" class="s">saferoom/+/+/status</text>
+
+  <rect x="390" y="380" width="214" height="106" class="box"/>
+  <text x="439" y="417" class="h">Collector</text>
+  <text x="424" y="442" class="s">topic parse</text>
+  <text x="424" y="462" class="s">SensorEvent validation</text>
+
+  <rect x="690" y="215" width="238" height="124" class="box backend"/>
+  <text x="750" y="254" class="h">FastAPI Backend</text>
+  <text x="728" y="280" class="s">REST API / internal ingest</text>
+  <text x="728" y="301" class="s">WebSocket realtime hub</text>
+  <text x="728" y="322" class="s">auth, alert, timeline</text>
+
+  <rect x="690" y="405" width="238" height="102" class="box"/>
+  <text x="765" y="443" class="h">Worker</text>
+  <text x="728" y="468" class="s">process heartbeat</text>
+  <text x="728" y="489" class="s">offline/stale monitoring basis</text>
+
+  <rect x="1010" y="204" width="246" height="118" class="box db"/>
+  <text x="1081" y="244" class="h">SQLite DB</text>
+  <text x="1048" y="270" class="s">readings, alerts, devices</text>
+  <text x="1048" y="291" class="s">incident responses, auth</text>
+
+  <rect x="1010" y="400" width="246" height="118" class="box ui"/>
+  <text x="1058" y="439" class="h">React Dashboard</text>
+  <text x="1048" y="465" class="s">latest readings, alerts, stats</text>
+  <text x="1048" y="486" class="s">incident replay and response</text>
+
+  <rect x="1010" y="584" width="246" height="96" class="box ui"/>
+  <text x="1057" y="622" class="h">pywebview App</text>
+  <text x="1048" y="648" class="s">desktop shell launches backend,</text>
+  <text x="1048" y="669" class="s">collector, worker, dashboard</text>
+
+  <path class="edge" d="M298 247 L390 247"/>
+  <text x="314" y="228" class="s">MQTT publish</text>
+  <path class="edge" d="M497 306 L497 380"/>
+  <text x="516" y="348" class="s">subscribe</text>
+  <path class="edge" d="M604 433 C642 430 652 278 690 278"/>
+  <text x="610" y="354" class="s">POST /internal/events</text>
+  <path class="edge" d="M928 278 L1010 263"/>
+  <text x="945" y="245" class="s">persist</text>
+  <path class="edge" d="M928 311 C971 340 963 414 1010 452"/>
+  <text x="941" y="388" class="s">REST / WS</text>
+  <path class="dash" d="M809 405 L809 339"/>
+  <text x="824" y="381" class="s">heartbeat</text>
+  <path class="edge" d="M1133 518 L1133 584"/>
+  <text x="1150" y="556" class="s">desktop embed</text>
+</svg>

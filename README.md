@@ -2,6 +2,13 @@
 
 팀원이 먼저 읽을 한국어 안내 문서: [README.ko.md](README.ko.md)
 
+
+프로젝트 계획서 : [2차_2조_프로젝트_계획서](doc/2차_2조_프로젝트_계획서.hwp)
+프로젝트 기술서 : [2차_2조_프로젝트_기술서.hwp](doc/2차_2조_프로젝트_기술서.hwp)
+프로젝트 기술서 : [2차_2조_프로젝트_기술서.pdf](doc/2차_2조_프로젝트_기술서.pdf)
+
+
+
 ## Differentiator
 
 Pico SafeRoom is not only an IoT sensor dashboard. Its Incident Replay + Guided Response flow lets a demo trigger a gas/temperature alert, review deterministic response guidance, save operator note/evidence on acknowledgement, and replay the related safety timeline.
