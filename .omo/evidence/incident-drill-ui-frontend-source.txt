@@ -1,0 +1,31 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.15, pytest-9.0.3, pluggy-1.6.0 -- /Users/chanpark/2n_project/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/chanpark/2n_project
+plugins: anyio-4.13.0
+collecting ... collected 22 items
+
+tests/test_frontend_auth_gate.py::test_pre_login_dashboard_is_blurred_and_locked PASSED [  4%]
+tests/test_frontend_auth_gate.py::test_auth_gate_offers_social_and_email_entry_points PASSED [  9%]
+tests/test_frontend_auth_gate.py::test_auth_gate_uses_backend_auth_endpoints PASSED [ 13%]
+tests/test_frontend_auth_gate.py::test_authenticated_dashboard_has_logout_action PASSED [ 18%]
+tests/test_frontend_auth_gate.py::test_dashboard_has_incident_response_workflow_hooks PASSED [ 22%]
+tests/test_frontend_auth_gate.py::test_dashboard_uses_incident_replay_and_ack_endpoints PASSED [ 27%]
+tests/test_frontend_auth_gate.py::test_incident_response_panel_surfaces_command_report PASSED [ 31%]
+tests/test_frontend_auth_gate.py::test_incident_drill_copy_and_interactive_checklist_contract PASSED [ 36%]
+tests/test_frontend_auth_gate.py::test_incident_drill_does_not_autocomplete_all_actions PASSED [ 40%]
+tests/test_frontend_auth_gate.py::test_incident_drill_panel_has_polished_visual_structure PASSED [ 45%]
+tests/test_frontend_auth_gate.py::test_dashboard_fetches_statistics_endpoint PASSED [ 50%]
+tests/test_frontend_auth_gate.py::test_dashboard_has_statistics_navigation_and_llm_context_preview PASSED [ 54%]
+tests/test_frontend_auth_gate.py::test_dashboard_has_korean_statistics_copy PASSED [ 59%]
+tests/test_frontend_auth_gate.py::test_statistics_page_has_environment_graphs PASSED [ 63%]
+tests/test_frontend_auth_gate.py::test_dashboard_has_llm_placeholder_without_real_chat_integration PASSED [ 68%]
+tests/test_frontend_auth_gate.py::test_dashboard_has_english_korean_language_toggle PASSED [ 72%]
+tests/test_frontend_auth_gate.py::test_dashboard_has_korean_copy_for_core_surfaces PASSED [ 77%]
+tests/test_frontend_auth_gate.py::test_incident_response_panel_uses_translated_copy PASSED [ 81%]
+tests/test_frontend_auth_gate.py::test_authenticated_dashboard_displays_logged_in_user_information PASSED [ 86%]
+tests/test_frontend_auth_gate.py::test_auth_errors_render_from_current_language_copy PASSED [ 90%]
+tests/test_frontend_auth_gate.py::test_incident_status_messages_render_from_current_language_copy PASSED [ 95%]
+tests/test_frontend_auth_gate.py::test_finite_statuses_and_quality_labels_use_language_copy PASSED [100%]
+
+============================== 22 passed in 0.01s ==============================

@@ -1278,8 +1278,6 @@ h1 {
 }
 
 .incident-guidance,
-.incident-review,
-.incident-report,
 .incident-form,
 .incident-replay {
   display: grid;
@@ -1289,61 +1287,89 @@ h1 {
 }
 
 .incident-guidance strong,
-.incident-review strong,
-.incident-report strong,
+.incident-review-card strong,
+.incident-report-card strong,
 .incident-replay strong {
   color: #13283d;
   font-size: 14px;
 }
 
-.incident-report {
-  background: rgba(63, 126, 232, 0.08);
+.incident-section-label {
+  color: rgba(24, 39, 58, 0.55);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0;
+  text-transform: uppercase;
 }
 
-.incident-review {
-  background: rgba(25, 169, 116, 0.1);
-}
-
-.incident-review div {
-  display: flex;
-  justify-content: space-between;
+.incident-review-card,
+.incident-report-card {
+  display: grid;
   gap: 10px;
+  margin: 12px 14px 0;
+  padding: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 8px;
+  box-shadow: 0 14px 34px rgba(23, 45, 73, 0.08);
 }
 
-.incident-review span,
-.incident-review small,
-.incident-review em,
-.incident-review li {
+.incident-review-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(229, 246, 240, 0.74));
+}
+
+.incident-report-card {
+  margin-bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(232, 240, 255, 0.78));
+}
+
+.incident-review-main {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.incident-score-ring {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid rgba(25, 169, 116, 0.32);
+  border-radius: 999px;
+  color: #147a57;
+  font-size: 13px;
+  font-weight: 880;
+}
+
+.incident-review-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.incident-review-card small,
+.incident-review-card li,
+.incident-report-card span,
+.incident-report-card small,
+.incident-report-card em {
   color: rgba(24, 39, 58, 0.72);
   font-size: 12px;
   font-style: normal;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
-.incident-review em {
-  color: #147a57;
-}
-
-.incident-review ul {
+.incident-review-card ul {
   margin: 0;
   padding-left: 18px;
 }
 
-.incident-report div {
+.incident-report-card div {
   display: grid;
   gap: 6px;
 }
 
-.incident-report span,
-.incident-report small,
-.incident-report em {
-  color: rgba(24, 39, 58, 0.72);
-  font-size: 12px;
-  font-style: normal;
-  font-weight: 700;
-}
-
-.incident-report em {
+.incident-report-card em {
   color: #285fb8;
   text-transform: capitalize;
 }
@@ -1365,15 +1391,17 @@ h1 {
   gap: 6px;
 }
 
-.incident-checklist {
+.incident-checklist-card {
   display: grid;
   gap: 8px;
   margin: 0;
-  padding: 0;
-  border: 0;
+  padding: 12px;
+  border: 1px solid rgba(63, 126, 232, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.38);
 }
 
-.incident-checklist legend {
+.incident-checklist-card legend {
   margin-bottom: 2px;
   color: var(--muted);
   font-size: 12px;
@@ -1390,6 +1418,10 @@ h1 {
   height: 16px;
   margin: 1px 0 0;
   accent-color: #19a974;
+}
+
+.incident-checklist-item span {
+  overflow-wrap: anywhere;
 }
 
 .incident-form span {

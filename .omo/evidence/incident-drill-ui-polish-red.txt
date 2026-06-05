@@ -1,0 +1,23 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.11.15, pytest-9.0.3, pluggy-1.6.0 -- /Users/chanpark/2n_project/.venv/bin/python
+cachedir: .pytest_cache
+rootdir: /Users/chanpark/2n_project
+plugins: anyio-4.13.0
+collecting ... collected 1 item
+
+tests/test_frontend_auth_gate.py::test_incident_drill_panel_has_polished_visual_structure FAILED [100%]
+
+=================================== FAILURES ===================================
+___________ test_incident_drill_panel_has_polished_visual_structure ____________
+
+    def test_incident_drill_panel_has_polished_visual_structure():
+        panel = source_text(INCIDENT_PANEL_TSX)
+        css = source_text(APP_CSS)
+    
+>       assert "incident-review-card" in panel
+E       assert 'incident-review-card' in 'import { useEffect, useState, type FormEvent } from \'react\';\nimport type { IncidentCopy, StatusLabelKey } from \'./language\';\n\ntype IncidentAlert = {\n  readonly alert_id: number | null;\n  readonly level: string;\n  readonly code: string;\n  readonly message: string;\n  readonly zone_id: string | null;\n  readonly status: string;\n};\n\ntype TimelineEntry = {\n  readonly id: string;\n  readonly type: string;\n  readonly timestamp: string;\n  readonly title: string;\n  readonly message: string;\n  readonly tone: string;\n};\n\ntype ChecklistItem = {\n  readonly id: string;\n  readonly label: string;\n};\n\ntype Guidance = {\n  readonly summary: string;\n  readonly recommended_action: string;\n  readonly checklist: readonly ChecklistItem[];\n};\n\ntype IncidentResponse = {\n  readonly checklist: readonly string[];\n  readonly note: string;\n  readonly evidence: string;\n};\n\ntype ResponseReview = {\n  readonly status: \'not_started\' | \'partial\' | \'complete\';\n  readonly completed_checklist: readonly string[];\n  readonly missed_checklist: readonly ChecklistItem[];\n  readonly unknown_checklist: readonly string[];\n  readonly completion_ratio: number;\n  readonly score...xLength={500} defaultValue={response?.evidence ?? \'\'} />\n        </label>\n        <button type="submit" disabled={selectedAlertId === null || busy}>\n          {busy ? copy.saving : copy.acknowledge}\n        </button>\n        {messageKey && <small>{copy[messageKey]}</small>}\n      </form>\n\n      {report && (\n        <div className="incident-report">\n          <strong>{copy.reportTitle}</strong>\n          <div>\n            <span>{report.title}</span>\n            <em>{copy.checklistComplete}: {report.response_review.completed_checklist.length}/{guidance.checklist.length}</em>\n          </div>\n          <small>{copy.timelineEvents}: {report.timeline.length}</small>\n        </div>\n      )}\n\n      {replay && (\n        <div className="incident-replay">\n          <strong>{copy.replayTimeline}</strong>\n          {replay.related_events.slice(0, 4).map((entry) => (\n            <div className="incident-event" key={entry.id}>\n              <time>{formatTime(entry.timestamp)}</time>\n              <span>{entry.title}</span>\n              <em>{entry.type.replace(\'_\', \' \')}</em>\n            </div>\n          ))}\n        </div>\n      )}\n    </section>\n  );\n}\n'
+
+tests/test_frontend_auth_gate.py:111: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_frontend_auth_gate.py::test_incident_drill_panel_has_polished_visual_structure
+============================== 1 failed in 0.03s ===============================

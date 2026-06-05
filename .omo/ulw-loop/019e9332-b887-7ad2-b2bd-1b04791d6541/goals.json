@@ -1,7 +1,7 @@
 {
   "version": 1,
   "createdAt": "2026-06-05T00:17:30.565Z",
-  "updatedAt": "2026-06-05T05:37:19.942Z",
+  "updatedAt": "2026-06-05T05:48:41.912Z",
   "briefPath": ".omo/ulw-loop/019e9332-b887-7ad2-b2bd-1b04791d6541/brief.md",
   "goalsPath": ".omo/ulw-loop/019e9332-b887-7ad2-b2bd-1b04791d6541/goals.json",
   "ledgerPath": ".omo/ulw-loop/019e9332-b887-7ad2-b2bd-1b04791d6541/ledger.jsonl",
@@ -46,6 +46,41 @@
       "updatedAt": "2026-06-05T05:37:19.942Z",
       "completedAt": "2026-06-05T05:37:19.942Z",
       "evidence": "Implemented Incident Drill Mode for active operator drills. Evidence names active OMO goal G001-build-more-things-that-make-pico-saf and audit artifacts .omo/ulw-loop/019e9332-b887-7ad2-b2bd-1b04791d6541/goals.json and .omo/ulw-loop/019e9332-b887-7ad2-b2bd-1b04791d6541/ledger.jsonl. Validation/review passed: full pytest, frontend build, diff check, live HTTP partial/unknown/complete QA, browser QA, ai-slop cleanup, and UNCONDITIONAL APPROVAL review."
+    },
+    {
+      "id": "G002-polish-incident-drill-mode-ui",
+      "title": "Polish Incident Drill Mode UI",
+      "objective": "Make the Incident Drill Mode panel visually cohesive with the Pico SafeRoom dashboard, preserving drill behavior and proving the polished browser surface with TDD and browser QA.",
+      "status": "pending",
+      "successCriteria": [
+        {
+          "id": "C001",
+          "scenario": "happy path for: Make the Incident Drill Mode panel visually cohesive with the Pico SafeRoom d...",
+          "userModel": "happy",
+          "expectedEvidence": "Replace via revise_criterion with observable happy-path proof for goal 2.",
+          "capturedEvidence": null,
+          "status": "pending"
+        },
+        {
+          "id": "C002",
+          "scenario": "edge case (boundary/empty/malformed)",
+          "userModel": "edge",
+          "expectedEvidence": "Replace via revise_criterion with boundary or malformed-input proof for: Make the Incident Drill Mode panel visually cohesive with the Pico SafeRoom d....",
+          "capturedEvidence": null,
+          "status": "pending"
+        },
+        {
+          "id": "C003",
+          "scenario": "regression: adjacent surface still works",
+          "userModel": "regression",
+          "expectedEvidence": "Replace via revise_criterion with regression proof for neighboring behavior after: Make the Incident Drill Mode panel visually cohesive with the Pico SafeRoom d....",
+          "capturedEvidence": null,
+          "status": "pending"
+        }
+      ],
+      "attempt": 0,
+      "createdAt": "2026-06-05T05:48:41.912Z",
+      "updatedAt": "2026-06-05T05:48:41.912Z"
     }
   ],
   "codexObjective": "Complete the durable ulw-loop plan in .omo/ulw-loop/019e9332-b887-7ad2-b2bd-1b04791d6541/goals.json, including later accepted/appended stories, under the original brief constraints; use .omo/ulw-loop/019e9332-b887-7ad2-b2bd-1b04791d6541/ledger.jsonl as the audit trail.",

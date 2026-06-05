@@ -104,6 +104,24 @@ def test_incident_drill_does_not_autocomplete_all_actions():
     assert "guidance.checklist.map((item) => item.id)" not in app
 
 
+def test_incident_drill_panel_has_polished_visual_structure():
+    panel = source_text(INCIDENT_PANEL_TSX)
+    css = source_text(APP_CSS)
+
+    assert "incident-review-card" in panel
+    assert "incident-review-copy" in panel
+    assert "incident-score-ring" in panel
+    assert "incident-checklist-card" in panel
+    assert "incident-report-card" in panel
+    assert "incident-section-label" in panel
+    assert ".incident-review-card" in css
+    assert ".incident-review-copy" in css
+    assert ".incident-score-ring" in css
+    assert ".incident-checklist-card" in css
+    assert ".incident-report-card" in css
+    assert "overflow-wrap: anywhere" in css
+
+
 def test_dashboard_fetches_statistics_endpoint():
     app = source_text(APP_TSX)
 

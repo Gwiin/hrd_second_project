@@ -1,0 +1,9 @@
+{
+  "eventStatus": 201,
+  "scrollWidth": 390,
+  "viewportWidth": 390,
+  "replayVisible": true,
+  "completedVisible": true,
+  "scoreVisible": true,
+  "reportVisible": true
+}

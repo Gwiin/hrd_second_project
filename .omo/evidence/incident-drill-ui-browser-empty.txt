@@ -1,0 +1,21 @@
+{
+  "noActiveAlert": true,
+  "notReplayable": true,
+  "replayDisabled": true,
+  "reviewCards": 0,
+  "panelText": [
+    "Incident response",
+    "room-1",
+    "Replay incident",
+    "No active alert",
+    "not replayable",
+    "Info",
+    "INCIDENT DRILL",
+    "No incident selected",
+    "Select a replayable alert to view response guidance.",
+    "Completed actions",
+    "Response note",
+    "Evidence",
+    "Acknowledge with evidence"
+  ]
+}

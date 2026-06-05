@@ -112,6 +112,7 @@ export function IncidentResponsePanel({
   };
   const response = replay?.response ?? null;
   const responseReview = report?.response_review ?? replay?.response_review ?? null;
+  const reviewScorePercent = responseReview ? Math.round(responseReview.completion_ratio * 100) : 0;
 
   async function loadReplay(alertId: number) {
     setBusy(true);
@@ -210,6 +211,7 @@ export function IncidentResponsePanel({
       })}
 
       <div className="incident-guidance">
+        <span className="incident-section-label">{copy.drillTitle}</span>
         <strong>{guidance.summary}</strong>
         <p>{guidance.recommended_action}</p>
         <ul aria-label={copy.completedActions}>
@@ -220,13 +222,22 @@ export function IncidentResponsePanel({
       </div>
 
       {responseReview && (
-        <div className="incident-review">
-          <strong>{copy.drillTitle}</strong>
-          <div>
-            <span>{copy.scoreLabel}: {formatReviewStatusLabel(responseReview, copy)}</span>
-            <em>{Math.round(responseReview.completion_ratio * 100)}%</em>
+        <div className="incident-review-card">
+          <div className="incident-review-main">
+            <span
+              className="incident-score-ring"
+              style={{
+                background: `radial-gradient(circle at center, rgba(255, 255, 255, 0.9) 0 52%, transparent 53%), conic-gradient(#19a974 0 ${reviewScorePercent}%, rgba(25, 169, 116, 0.16) ${reviewScorePercent}% 100%)`
+              }}
+            >
+              {reviewScorePercent}%
+            </span>
+            <div className="incident-review-copy">
+              <span className="incident-section-label">{copy.scoreLabel}</span>
+              <strong>{formatReviewStatusLabel(responseReview, copy)}</strong>
+              <small>{copy.nextBestAction}: {responseReview.next_best_action}</small>
+            </div>
           </div>
-          <small>{copy.nextBestAction}: {responseReview.next_best_action}</small>
           {responseReview.missed_checklist.length > 0 && (
             <ul aria-label={copy.missedActions}>
               {responseReview.missed_checklist.map((item) => (
@@ -238,7 +249,7 @@ export function IncidentResponsePanel({
       )}
 
       <form className="incident-form" onSubmit={handleResponseSubmit}>
-        <fieldset className="incident-checklist">
+        <fieldset className="incident-checklist-card">
           <legend>{copy.completedActions}</legend>
           {guidance.checklist.map((item) => (
             <label className="incident-checklist-item" key={item.id}>
@@ -267,7 +278,7 @@ export function IncidentResponsePanel({
       </form>
 
       {report && (
-        <div className="incident-report">
+        <div className="incident-report-card">
           <strong>{copy.reportTitle}</strong>
           <div>
             <span>{report.title}</span>
