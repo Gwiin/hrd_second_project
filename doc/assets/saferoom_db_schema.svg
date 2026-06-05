@@ -1,140 +1,164 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1040" viewBox="0 0 1500 1040" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000" role="img" aria-labelledby="title desc">
   <title id="title">Pico SafeRoom SQLite DB schema</title>
-  <desc id="desc">SQLite schema with devices, sensors, sensor_readings, alerts, incident_responses, process_heartbeats, users, auth_accounts, and auth_sessions.</desc>
+  <desc id="desc">High contrast SQLite schema. Solid lines are declared foreign keys. Dashed lines are logical links by shared id columns.</desc>
   <defs>
-    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
-      <path d="M2,2 L10,6 L2,10 Z" fill="#314454"/>
+    <marker id="solidArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#24384A"/>
+    </marker>
+    <marker id="dashArrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M2,2 L10,6 L2,10 Z" fill="#566A7A"/>
     </marker>
     <style>
-      .bg { fill: #f7f9fc; }
-      .table { fill: #ffffff; stroke: #314454; stroke-width: 2.2; rx: 12; }
-      .head { fill: #e9f1f7; }
-      .auth .head { fill: #f3ecff; }
-      .event .head { fill: #eaf8ef; }
-      .alert .head { fill: #fff0f0; }
-      .title { font: 700 30px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #1d2b34; }
-      .name { font: 700 18px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #1d2b34; }
-      .col { font: 500 13px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #2f3d47; }
-      .key { font-weight: 700; fill: #0f6f43; }
-      .note { font: 500 14px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #53636f; }
-      .rel { fill: none; stroke: #314454; stroke-width: 2.2; marker-end: url(#arrow); }
-      .dash { fill: none; stroke: #7a8790; stroke-width: 2; stroke-dasharray: 7 7; marker-end: url(#arrow); }
+      .bg { fill: #ffffff; }
+      .title { font: 700 38px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #111B24; }
+      .subtitle { font: 500 17px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #354553; }
+      .table { fill: #ffffff; stroke: #26394A; stroke-width: 2.6; rx: 10; }
+      .head { stroke: #26394A; stroke-width: 0; }
+      .core .head { fill: #CFEDE5; }
+      .event .head { fill: #D7E8FF; }
+      .response .head { fill: #FFE0DC; }
+      .ops .head { fill: #F2E5CB; }
+      .auth .head { fill: #E5DDF7; }
+      .name { font: 700 22px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #111B24; }
+      .col { font: 600 16px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #26323D; }
+      .small { font: 600 14px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #26323D; }
+      .key { fill: #075F4B; }
+      .fk { fill: #8B2F24; }
+      .note { font: 600 14px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #4A5A67; }
+      .legend { font: 700 15px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #26323D; }
+      .solid { fill: none; stroke: #24384A; stroke-width: 3.2; marker-end: url(#solidArrow); }
+      .dash { fill: none; stroke: #566A7A; stroke-width: 3; stroke-dasharray: 9 8; marker-end: url(#dashArrow); }
+      .label { font: 700 14px AppleSDGothicNeo, NanumGothic, Arial, sans-serif; fill: #24384A; }
     </style>
   </defs>
-  <rect class="bg" width="1500" height="1040"/>
-  <text x="58" y="64" class="title">Pico SafeRoom DB 스키마</text>
-  <text x="58" y="94" class="note">근거: `apps/backend/db/sqlite_repository.py`의 SQLite 초기화 스크립트</text>
 
-  <g class="table event" transform="translate(70 145)">
-    <rect width="300" height="190" class="table"/>
-    <rect width="300" height="42" class="head" rx="12"/>
-    <text x="20" y="27" class="name">devices</text>
-    <text x="20" y="66" class="col key">PK device_id</text>
-    <text x="20" y="88" class="col">zone_id, device_name, model</text>
-    <text x="20" y="110" class="col">status, protocol, enabled</text>
-    <text x="20" y="132" class="col">last_seen_at</text>
-    <text x="20" y="164" class="col">4대 Pico 2W 기본 등록</text>
+  <rect class="bg" width="1600" height="1000"/>
+  <text x="60" y="62" class="title">Pico SafeRoom DB 스키마</text>
+  <text x="60" y="96" class="subtitle">근거: apps/backend/db/sqlite_repository.py 의 실제 SQLite 초기화 SQL</text>
+
+  <line x1="64" y1="124" x2="144" y2="124" class="solid"/>
+  <text x="160" y="130" class="legend">실제 FOREIGN KEY</text>
+  <line x1="330" y1="124" x2="410" y2="124" class="dash"/>
+  <text x="426" y="130" class="legend">논리 관계 / 공유 컬럼</text>
+
+  <g class="table core" transform="translate(70 150)">
+    <rect width="340" height="230" class="table"/>
+    <rect width="340" height="52" class="head"/>
+    <text x="22" y="34" class="name">devices</text>
+    <text x="22" y="84" class="col key">PK device_id</text>
+    <text x="22" y="112" class="col">zone_id</text>
+    <text x="22" y="140" class="col">device_name, model</text>
+    <text x="22" y="168" class="col">status, protocol</text>
+    <text x="22" y="196" class="col">enabled, last_seen_at</text>
   </g>
 
-  <g class="table event" transform="translate(470 145)">
-    <rect width="310" height="160" class="table"/>
-    <rect width="310" height="42" class="head" rx="12"/>
-    <text x="20" y="27" class="name">sensors</text>
-    <text x="20" y="66" class="col key">PK device_id + sensor_id</text>
-    <text x="20" y="88" class="col">sensor_name, unit</text>
-    <text x="20" y="120" class="col">수신된 센서 metadata 등록</text>
+  <g class="table core" transform="translate(500 150)">
+    <rect width="370" height="185" class="table"/>
+    <rect width="370" height="52" class="head"/>
+    <text x="22" y="34" class="name">sensors</text>
+    <text x="22" y="84" class="col key">PK device_id + sensor_id</text>
+    <text x="22" y="112" class="col">sensor_name</text>
+    <text x="22" y="140" class="col">unit</text>
+    <text x="22" y="168" class="note">수신 이벤트 기준으로 등록</text>
   </g>
 
-  <g class="table event" transform="translate(470 385)">
-    <rect width="350" height="250" class="table"/>
-    <rect width="350" height="42" class="head" rx="12"/>
-    <text x="20" y="27" class="name">sensor_readings</text>
-    <text x="20" y="66" class="col key">PK reading_id</text>
-    <text x="20" y="88" class="col key">UNIQUE event_id</text>
-    <text x="20" y="110" class="col">site_id, zone_id, device_id, sensor_id</text>
-    <text x="20" y="132" class="col">protocol, value, unit, quality</text>
-    <text x="20" y="154" class="col">measured_at, received_at</text>
-    <text x="20" y="176" class="col">payload_json</text>
-    <text x="20" y="214" class="col">센서 측정 이력과 원본 정규화 payload</text>
+  <g class="table event" transform="translate(500 420)">
+    <rect width="420" height="320" class="table"/>
+    <rect width="420" height="52" class="head"/>
+    <text x="22" y="34" class="name">sensor_readings</text>
+    <text x="22" y="84" class="col key">PK reading_id</text>
+    <text x="22" y="112" class="col key">UNIQUE event_id</text>
+    <text x="22" y="140" class="col">site_id, zone_id</text>
+    <text x="22" y="168" class="col">device_id, sensor_id</text>
+    <text x="22" y="196" class="col">protocol, value, unit</text>
+    <text x="22" y="224" class="col">quality</text>
+    <text x="22" y="252" class="col">measured_at, received_at</text>
+    <text x="22" y="280" class="col">payload_json</text>
+    <text x="22" y="306" class="note">센서 이벤트 원본 저장</text>
   </g>
 
-  <g class="table alert" transform="translate(930 385)">
-    <rect width="330" height="230" class="table"/>
-    <rect width="330" height="42" class="head" rx="12"/>
-    <text x="20" y="27" class="name">alerts</text>
-    <text x="20" y="66" class="col key">PK alert_id</text>
-    <text x="20" y="88" class="col">level, code, message</text>
-    <text x="20" y="110" class="col">zone_id, device_id, sensor_id</text>
-    <text x="20" y="132" class="col">value, status</text>
-    <text x="20" y="154" class="col">created_at, resolved_at</text>
-    <text x="20" y="194" class="col">warning/critical incident 기록</text>
+  <g class="table response" transform="translate(1040 500)">
+    <rect width="370" height="255" class="table"/>
+    <rect width="370" height="52" class="head"/>
+    <text x="22" y="34" class="name">alerts</text>
+    <text x="22" y="84" class="col key">PK alert_id</text>
+    <text x="22" y="112" class="col">level, code, message</text>
+    <text x="22" y="140" class="col">zone_id</text>
+    <text x="22" y="168" class="col">device_id, sensor_id</text>
+    <text x="22" y="196" class="col">value, status</text>
+    <text x="22" y="224" class="col">created_at, resolved_at</text>
+    <text x="22" y="245" class="note">임계 판단 결과 저장</text>
   </g>
 
-  <g class="table alert" transform="translate(930 690)">
-    <rect width="330" height="184" class="table"/>
-    <rect width="330" height="42" class="head" rx="12"/>
-    <text x="20" y="27" class="name">incident_responses</text>
-    <text x="20" y="66" class="col key">PK/FK alert_id</text>
-    <text x="20" y="88" class="col">checklist_json</text>
-    <text x="20" y="110" class="col">note, evidence</text>
-    <text x="20" y="132" class="col">created_at, updated_at</text>
-    <text x="20" y="158" class="col">운영자 대응 기록</text>
+  <g class="table response" transform="translate(1040 780)">
+    <rect width="370" height="190" class="table"/>
+    <rect width="370" height="52" class="head"/>
+    <text x="22" y="34" class="name">incident_responses</text>
+    <text x="22" y="84" class="col fk">PK/FK alert_id</text>
+    <text x="22" y="112" class="col">checklist_json</text>
+    <text x="22" y="140" class="col">note, evidence</text>
+    <text x="22" y="168" class="col">created_at, updated_at</text>
   </g>
 
-  <g class="table" transform="translate(70 405)">
-    <rect width="300" height="150" class="table"/>
-    <rect width="300" height="42" class="head" rx="12"/>
-    <text x="20" y="27" class="name">system_logs</text>
-    <text x="20" y="66" class="col key">PK log_id</text>
-    <text x="20" y="88" class="col">timestamp, level, message</text>
-    <text x="20" y="120" class="col">수신/검증/시스템 이벤트 로그</text>
+  <g class="table ops" transform="translate(70 470)">
+    <rect width="340" height="170" class="table"/>
+    <rect width="340" height="52" class="head"/>
+    <text x="22" y="34" class="name">system_logs</text>
+    <text x="22" y="84" class="col key">PK log_id</text>
+    <text x="22" y="112" class="col">timestamp</text>
+    <text x="22" y="140" class="col">level, message</text>
   </g>
 
-  <g class="table" transform="translate(70 650)">
-    <rect width="300" height="155" class="table"/>
-    <rect width="300" height="42" class="head" rx="12"/>
-    <text x="20" y="27" class="name">process_heartbeats</text>
-    <text x="20" y="66" class="col key">PK process</text>
-    <text x="20" y="88" class="col">status, last_seen_at</text>
-    <text x="20" y="110" class="col">metadata_json</text>
-    <text x="20" y="134" class="col">backend/collector/worker 상태</text>
+  <g class="table ops" transform="translate(70 730)">
+    <rect width="340" height="185" class="table"/>
+    <rect width="340" height="52" class="head"/>
+    <text x="22" y="34" class="name">process_heartbeats</text>
+    <text x="22" y="84" class="col key">PK process</text>
+    <text x="22" y="112" class="col">status</text>
+    <text x="22" y="140" class="col">last_seen_at</text>
+    <text x="22" y="168" class="col">metadata_json</text>
   </g>
 
-  <g class="table auth" transform="translate(470 735)">
-    <rect width="320" height="185" class="table"/>
-    <rect width="320" height="42" class="head" rx="12"/>
-    <text x="20" y="27" class="name">users</text>
-    <text x="20" y="66" class="col key">PK user_id</text>
-    <text x="20" y="88" class="col key">UNIQUE email</text>
-    <text x="20" y="110" class="col">display_name, password_hash</text>
-    <text x="20" y="132" class="col">primary_provider, created_at</text>
-    <text x="20" y="160" class="col">email/social login 사용자</text>
+  <g class="table auth" transform="translate(1040 150)">
+    <rect width="370" height="190" class="table"/>
+    <rect width="370" height="52" class="head"/>
+    <text x="22" y="34" class="name">users</text>
+    <text x="22" y="84" class="col key">PK user_id</text>
+    <text x="22" y="112" class="col key">UNIQUE email</text>
+    <text x="22" y="140" class="col">display_name, password_hash</text>
+    <text x="22" y="168" class="col">primary_provider, created_at</text>
   </g>
 
-  <g class="table auth" transform="translate(930 120)">
-    <rect width="330" height="170" class="table"/>
-    <rect width="330" height="42" class="head" rx="12"/>
-    <text x="20" y="27" class="name">auth_accounts</text>
-    <text x="20" y="66" class="col key">PK provider + provider_subject</text>
-    <text x="20" y="88" class="col key">FK user_id</text>
-    <text x="20" y="110" class="col">email, linked_at</text>
-    <text x="20" y="140" class="col">Google/Kakao 계정 연결</text>
+  <g class="table auth" transform="translate(1010 18)">
+    <rect width="430" height="100" class="table"/>
+    <rect width="430" height="42" class="head"/>
+    <text x="20" y="28" class="name">auth_accounts</text>
+    <text x="20" y="64" class="small key">PK provider + provider_subject</text>
+    <text x="20" y="88" class="small fk">FK user_id, email, linked_at</text>
   </g>
 
-  <g class="table auth" transform="translate(930 930)">
-    <rect width="330" height="95" class="table"/>
-    <rect width="330" height="34" class="head" rx="12"/>
-    <text x="20" y="23" class="name">auth_sessions</text>
-    <text x="20" y="56" class="col key">PK session_token, FK user_id</text>
-    <text x="20" y="78" class="col">created_at, expires_at</text>
+  <g class="table auth" transform="translate(1010 370)">
+    <rect width="430" height="95" class="table"/>
+    <rect width="430" height="42" class="head"/>
+    <text x="20" y="28" class="name">auth_sessions</text>
+    <text x="20" y="64" class="small key">PK session_token</text>
+    <text x="20" y="88" class="small fk">FK user_id, created_at, expires_at</text>
   </g>
 
-  <path class="rel" d="M370 240 L470 225"/>
-  <path class="rel" d="M625 305 L625 385"/>
-  <path class="dash" d="M820 510 L930 500"/>
-  <path class="rel" d="M1095 615 L1095 690"/>
-  <path class="rel" d="M790 825 C850 825 870 205 930 205"/>
-  <path class="rel" d="M790 855 C850 880 870 965 930 972"/>
-  <text x="835" y="486" class="note">threshold rule</text>
-  <text x="1115" y="660" class="note">ack/replay</text>
+  <path class="dash" d="M410 245 L500 235"/>
+  <text x="428" y="222" class="label">device_id</text>
+  <path class="dash" d="M685 335 L685 420"/>
+  <text x="704" y="386" class="label">device_id + sensor_id</text>
+  <path class="dash" d="M410 292 C470 355 470 560 500 585"/>
+  <text x="392" y="445" class="label">device_id</text>
+  <path class="dash" d="M920 575 L1040 625"/>
+  <text x="948" y="596" class="label">threshold rule</text>
+  <path class="solid" d="M1225 755 L1225 780"/>
+  <text x="1244" y="774" class="label">alert_id</text>
+  <path class="solid" d="M1225 118 L1225 150"/>
+  <text x="1244" y="143" class="label">user_id</text>
+  <path class="solid" d="M1225 370 L1225 340"/>
+  <text x="1244" y="360" class="label">user_id</text>
+
+  <text x="60" y="968" class="subtitle">주의: devices, sensors, sensor_readings, alerts 사이에는 SQLite FOREIGN KEY가 없고 애플리케이션에서 공유 컬럼으로 조회합니다.</text>
 </svg>
