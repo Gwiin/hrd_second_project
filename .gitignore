@@ -8,4 +8,6 @@ data/
 logs/
 frontend/node_modules/
 frontend/dist/
-
+agent-map.md
+AGENTS.md
+plan.md
